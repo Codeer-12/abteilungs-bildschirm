@@ -269,6 +269,14 @@ tbody tr:last-child td{border-bottom:none}
 .doc-card .dc-title{font-weight:700;font-size:16px}
 .doc-card .dc-meta{font-size:12.5px;color:var(--text-soft)}
 
+/* Mini thumbnails on gallery tile (start page) */
+.mini-grid{display:flex;flex-wrap:wrap;gap:9px;margin-top:8px;flex:1;align-content:flex-start}
+.mini-thumb{width:54px;height:62px;border-radius:9px;display:grid;place-items:center;font-size:23px;color:#fff;cursor:pointer;box-shadow:0 2px 7px rgba(0,0,0,.14);transition:transform .14s;position:relative}
+.mini-thumb:hover{transform:scale(1.09)}
+.mini-thumb.more{background:var(--gray-bg);color:var(--text-soft);font-size:15px;font-weight:700;box-shadow:none}
+.tile.gallery{min-height:230px}
+@media(min-width:900px){.tile.gallery{grid-column:span 2}}
+
 /* ---------- Info panels ---------- */
 .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg)}
@@ -655,11 +663,67 @@ function renderHome(main){
   main.innerHTML=html;
 
   const grid=$('#tiles',main);
-  const order=DB.tileOrder||Object.keys(TILES);
-  order.forEach(key=>{
-    const t=TILES[key];if(!t)return;
-    grid.appendChild(tileEl(key,t,d));
+  ensureLayout();
+  const layout=DB.layout[d.id]||[];
+  layout.forEach(item=>{
+    if(item.type==='docgallery')grid.appendChild(galleryTileEl(item,d));
+    else{const t=TILES[item.key];if(t)grid.appendChild(tileEl(item.key,t,d,item.id));}
   });
+  if(!layout.length)grid.innerHTML=empty('🧩','Keine Kacheln aktiv',isAdmin()?'Über ⚙️ Administration → Startseite Kacheln hinzufügen':'');
+}
+
+/* Ensure per-department layout exists (migration for older data) */
+function ensureLayout(){
+  if(!DB.layout)DB.layout={};
+  let changed=false;
+  DB.departments.forEach(d=>{
+    if(!DB.layout[d.id]){
+      DB.layout[d.id]=(DB.tileOrder||Object.keys(TILES)).map(k=>({id:uid('tl'),type:'builtin',key:k}));
+      if(d.id==='prod'){ // Demo-Galerie zeigt Mini-Vorschau-Feature
+        DB.layout[d.id].splice(1,0,{id:uid('gl'),type:'docgallery',title:'Wichtige Dokumente',icon:'⭐',color:'#004b87',docIds:['d1','d2','d3','d4']});
+      }
+      changed=true;
+    }
+  });
+  if(changed)save();
+}
+
+/* Document-gallery tile with small previews directly on the start page */
+function galleryTileEl(item,d){
+  let docs=(item.docIds||[]).map(id=>DB.documents.find(x=>x.id===id)).filter(Boolean);
+  if(!isAdmin())docs=docs.filter(x=>x.status==='published');
+  const tile=el('div','tile gallery');
+  tile.onclick=()=>openGallery(item.id);
+  const shown=docs.slice(0,6);
+  const more=docs.length-shown.length;
+  tile.innerHTML=`
+    <div class="tile-top">
+      <div class="ic" style="background:${item.color}22">${item.icon}</div>
+      ${docs.length?`<span class="badge-count q" style="background:var(--blue)">${docs.length}</span>`:''}
+    </div>
+    <div class="tile-body">
+      <h3>${esc(item.title)}</h3>
+      <div class="mini-grid">${shown.map(miniThumb).join('')}${more>0?`<div class="mini-thumb more">+${more}</div>`:''}${!docs.length?'<span style="color:var(--text-soft);font-size:14px">Keine Dokumente zugewiesen</span>':''}</div>
+      <div class="tile-foot"><span class="pip s-info"></span> Dokumente · tippen zum Öffnen</div>
+    </div>`;
+  return tile;
+}
+function miniThumb(x){
+  const[fc]=fileMeta(x.fileType);
+  const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
+  const bg=fc==='fi-pdf'?'#d63b3b':fc==='fi-doc'?'#2b579a':fc==='fi-xls'?'#217346':fc==='fi-ppt'?'#d24726':fc==='fi-img'?'#7b4fc0':'#6b7480';
+  const ic=isImg?'🖼️':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄';
+  return `<div class="mini-thumb" title="${esc(x.title)}" style="background:linear-gradient(135deg,${bg},${bg}cc)" onclick="event.stopPropagation();openDoc('${x.id}')">${ic}</div>`;
+}
+function openGallery(id){
+  const g=(DB.layout[session.dept]||[]).find(x=>x.id===id);if(!g)return;
+  let docs=(g.docIds||[]).map(i=>DB.documents.find(x=>x.id===i)).filter(Boolean);
+  if(!isAdmin())docs=docs.filter(x=>x.status==='published');
+  const body=el('div');
+  if(!docs.length)body.innerHTML=empty('📁','Keine Dokumente',canEditDept(session.dept)?'In der Administration → Startseite Dokumente zuweisen':'');
+  else body.appendChild(docGrid(docs));
+  const editBtn=canEditDept(session.dept)?`<button class="btn ghost sm" onclick="closeOverlay();openAdmin('tiles');setTimeout(()=>editGallery('${g.id}'),60)">✎ Galerie bearbeiten</button>`:'';
+  openOverlay(sheet(g.title,g.icon,dept().name+' · '+docs.length+' Dokument(e)',body,editBtn));
 }
 
 function counts(key,dId){
@@ -1189,7 +1253,7 @@ function openAdmin(focus){
 }
 function renderAdmin(host){
   const d=dept();
-  const tabs=[['content','Übersicht'],['news','Meldungen'],['tasks','Aufgaben'],['projects','Projekte'],['kpis','Kennzahlen'],['events','Termine'],['info','Abteilung'],['tiles','Kachel-Reihenfolge'],['log','Protokoll']];
+  const tabs=[['content','Übersicht'],['news','Meldungen'],['tasks','Aufgaben'],['projects','Projekte'],['kpis','Kennzahlen'],['events','Termine'],['info','Abteilung'],['tiles','Startseite & Kacheln'],['log','Protokoll']];
   host.innerHTML=`<div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${adminTab===k?'active':''}" onclick="setAdminTab('${k}')">${l}</button>`).join('')}</div><div id="adminBody"></div>`;
   const b=$('#adminBody',host);
   ({content:adminContent,news:adminNews,tasks:adminTasks,projects:adminProjects,kpis:adminKpis,events:adminEvents,info:adminInfo,tiles:adminTiles,log:adminLog}[adminTab]||adminContent)(b,d);
@@ -1434,25 +1498,69 @@ function saveInfo(){
   save();logAction('Abteilungsinfo aktualisiert',d.name,'ℹ️');toast('Gespeichert','ok');goHomeRefresh();
 }
 
-/* ----- Admin: Tile order ----- */
+/* ----- Admin: Startseite-Baukasten ----- */
 function adminTiles(b,d){
-  const order=DB.tileOrder;
-  b.innerHTML=`<h3 style="font-size:20px;margin-bottom:8px">Kachel-Reihenfolge</h3>
-    <p style="color:var(--text-soft);margin-bottom:16px">Reihenfolge der Startseiten-Kacheln festlegen. Pfeile zum Verschieben.</p>
-    <div class="panel"><div id="tileOrderList"></div></div>`;
-  const host=$('#tileOrderList');
-  order.forEach((k,i)=>{
-    const t=TILES[k];
+  ensureLayout();
+  const layout=DB.layout[d.id]||[];
+  const used=layout.filter(i=>i.type==='builtin').map(i=>i.key);
+  const avail=Object.keys(TILES).filter(k=>!used.includes(k));
+  b.innerHTML=`
+    <h3 style="font-size:20px;margin-bottom:6px">Startseite zusammenstellen</h3>
+    <p style="color:var(--text-soft);margin-bottom:18px">Nur die Kacheln aktivieren, die diese Abteilung braucht. Reihenfolge mit den Pfeilen. Eigene Dokumenten-Galerien mit Mini-Vorschau anlegen.</p>
+    <div class="sec-title">Aktive Kacheln (${layout.length})</div>
+    <div class="panel"><div id="layoutList"></div></div>
+    <div class="sec-title">Standard-Kachel hinzufügen</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      ${avail.length?avail.map(k=>`<button class="btn ghost sm" onclick="addBuiltinTile('${k}')">${TILES[k].icon} ＋ ${esc(TILES[k].name)}</button>`).join(''):'<span style="color:var(--text-soft)">Alle Standard-Kacheln bereits aktiv</span>'}
+    </div>
+    <div class="sec-title">Dokumenten-Galerie</div>
+    <button class="btn" onclick="editGallery()">📁 ＋ Neue Dokumenten-Galerie</button>`;
+  const host=$('#layoutList');
+  if(!layout.length){host.innerHTML='<div class="panel-body" style="color:var(--text-soft)">Keine Kacheln aktiv – unten hinzufügen.</div>';return;}
+  layout.forEach((item,i)=>{
+    const isG=item.type==='docgallery';
+    const name=isG?item.title:(TILES[item.key]||{}).name||item.key;
+    const icon=isG?item.icon:(TILES[item.key]||{}).icon||'▪';
+    const bg=isG?item.color+'22':(TILES[item.key]||{}).bg||'#eee';
     host.appendChild(el('div','list-row',`
-      <div class="ic" style="width:44px;height:44px;border-radius:11px;background:${t.bg};display:grid;place-items:center;font-size:22px">${t.icon}</div>
-      <div class="lr-main"><div class="lr-title">${i+1}. ${esc(t.name)}</div></div>
+      <div class="ic" style="width:44px;height:44px;border-radius:11px;background:${bg};display:grid;place-items:center;font-size:22px">${icon}</div>
+      <div class="lr-main"><div class="lr-title">${i+1}. ${esc(name)}</div><div class="lr-sub">${isG?'📁 Galerie · '+(item.docIds||[]).length+' Dokument(e)':'Standard-Kachel'}</div></div>
       <div class="lr-side" style="flex-direction:row;gap:6px">
-        <button class="ico-btn" ${i===0?'disabled style=opacity:.3':''} onclick="moveTile(${i},-1)">▲</button>
-        <button class="ico-btn" ${i===order.length-1?'disabled style=opacity:.3':''} onclick="moveTile(${i},1)">▼</button>
+        <button class="ico-btn" ${i===0?'disabled style=opacity:.3':''} onclick="moveLayout(${i},-1)">▲</button>
+        <button class="ico-btn" ${i===layout.length-1?'disabled style=opacity:.3':''} onclick="moveLayout(${i},1)">▼</button>
+        ${isG?`<button class="ico-btn" title="Bearbeiten" onclick="editGallery('${item.id}')">✎</button>`:''}
+        <button class="ico-btn danger" title="Entfernen" onclick="removeLayoutItem('${item.id}')">✕</button>
       </div>`));
   });
 }
-function moveTile(i,dir){const o=DB.tileOrder;const j=i+dir;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];save();logAction('Kachel-Reihenfolge geändert','','↕');refreshAdmin();goHomeRefresh();}
+function moveLayout(i,dir){const L=DB.layout[session.dept];const j=i+dir;if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];save();logAction('Startseite umsortiert','','↕');refreshAdmin();goHomeRefresh();}
+function removeLayoutItem(id){const L=DB.layout[session.dept];const it=L.find(x=>x.id===id);DB.layout[session.dept]=L.filter(x=>x.id!==id);save();logAction('Kachel entfernt',it?(it.title||(TILES[it.key]||{}).name||''):'','✕');toast('Kachel entfernt','ok');refreshAdmin();goHomeRefresh();}
+function addBuiltinTile(key){DB.layout[session.dept].push({id:uid('tl'),type:'builtin',key});save();logAction('Kachel hinzugefügt',TILES[key].name,'＋');toast(TILES[key].name+' hinzugefügt','ok');refreshAdmin();goHomeRefresh();}
+function editGallery(id){
+  const g=id?DB.layout[session.dept].find(x=>x.id===id):null;
+  const docs=DB.documents.filter(x=>x.dept===session.dept);
+  const body=`
+    <div class="grid-2">
+      <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="gTitle" value="${g?esc(g.title):''}" placeholder="z.B. Wichtige Formulare"></div>
+      <div class="field"><label>Icon (Emoji)</label><input class="input" id="gIcon" value="${g?esc(g.icon):'📁'}"></div>
+    </div>
+    <div class="field"><label>Farbe</label><input class="input" type="color" id="gColor" value="${g?g.color:'#004b87'}" style="height:48px;padding:4px;max-width:130px"></div>
+    <div class="field"><label>Dokumente auswählen <span class="hint" style="display:inline">(erscheinen als Mini-Vorschau auf der Startseite)</span></label>
+      <div style="max-height:300px;overflow-y:auto;border:2px solid var(--border);border-radius:11px;padding:8px">
+      ${docs.length?docs.map(x=>{const[fc,ft]=fileMeta(x.fileType);return `<label class="check" style="border:none;margin-bottom:2px;padding:8px 10px"><input type="checkbox" class="gDoc" value="${x.id}" ${g&&(g.docIds||[]).includes(x.id)?'checked':''}> <span class="file-ic ${fc}" style="width:30px;height:30px;font-size:11px">${ft}</span> <span style="flex:1;line-height:1.3">${esc(x.title)}<br><span style="color:var(--text-soft);font-size:12px">${esc(x.category)} · ${x.status==='published'?'freigegeben':x.status}</span></span></label>`;}).join(''):'<div style="color:var(--text-soft);padding:12px">Noch keine Dokumente in dieser Abteilung. Erst hochladen.</div>'}
+      </div>
+    </div>`;
+  openModal(g?'Galerie bearbeiten':'Neue Dokumenten-Galerie',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveGallery('${id||''}')">✓ Speichern</button>`,true);
+}
+function saveGallery(id){
+  const title=$('#gTitle').value.trim();if(!title){toast('Titel fehlt','err');return;}
+  const docIds=[...document.querySelectorAll('.gDoc:checked')].map(c=>c.value);
+  const data={title,icon:$('#gIcon').value.trim()||'📁',color:$('#gColor').value,docIds};
+  if(id){Object.assign(DB.layout[session.dept].find(x=>x.id===id),data);logAction('Galerie bearbeitet',title,'📁');}
+  else{DB.layout[session.dept].push({id:uid('gl'),type:'docgallery',...data});logAction('Galerie erstellt',title,'📁');}
+  save();toast('Galerie gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
 
 /* ----- Admin: Log ----- */
 function adminLog(b,d){
@@ -1573,7 +1681,7 @@ function delDept(id){
   if(DB.departments.length<=1){toast('Mindestens eine Abteilung nötig','err');return;}
   confirmModal('Abteilung löschen?',`«${d.name}» und alle zugeordneten Inhalte werden entfernt.`,'Löschen',()=>{
     ['documents','projects','kpis','tasks','events','news'].forEach(k=>DB[k]=DB[k].filter(x=>x.dept!==id));
-    DB.departments=DB.departments.filter(x=>x.id!==id);delete DB.info[id];delete DB.shifts[id];
+    DB.departments=DB.departments.filter(x=>x.id!==id);delete DB.info[id];delete DB.shifts[id];delete DB.layout[id];
     if(session.dept===id)session.dept=DB.departments[0].id;
     save();logAction('Abteilung gelöscht',d.name,'🗑');toast('Gelöscht','ok');refreshUserMgmt();render();
   });
