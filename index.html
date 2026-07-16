@@ -1749,6 +1749,11 @@ function dndMove(e){
     DND.srcEl.classList.add('dragging');
   }
   DND.ghost.style.transform=`translate(${e.clientX+10}px,${e.clientY+10}px) rotate(2deg)`;
+  // Auto-Scroll: nahe Ober-/Unterkante des Sheets scrollen, damit lange Listen erreichbar sind
+  const sb=document.querySelector('.sheet-body');
+  if(sb){const sr=sb.getBoundingClientRect();
+    if(e.clientY<sr.top+70)sb.scrollTop-=14;
+    else if(e.clientY>sr.bottom-70)sb.scrollTop+=14;}
   document.querySelectorAll('.dnd-item.drop-before,.dnd-item.drop-after').forEach(x=>x.classList.remove('drop-before','drop-after'));
   document.querySelectorAll('.dnd-zone.over').forEach(z=>z.classList.remove('over'));
   const elp=document.elementFromPoint(e.clientX,e.clientY);
