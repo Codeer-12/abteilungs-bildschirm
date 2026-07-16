@@ -1434,7 +1434,7 @@ window.addEventListener('storage',ev=>{
 let adminTab='content';
 function openAdmin(focus){
   if(!isAdmin()){toast('Keine Berechtigung','err');return;}
-  adminTab=focus&&['news','tasks','projects','kpis','events','shift','info'].includes(focus)?focus:'content';
+  adminTab=focus&&['news','tasks','projects','kpis','events','shift','info','tiles'].includes(focus)?focus:'content';
   const body=el('div');
   renderAdmin(body);
   openOverlay(sheet('Administration','⚙️','Inhalte verwalten · '+dept().name,body));
@@ -1701,7 +1701,7 @@ function adminTiles(b,d){
         <button class="btn" style="margin-top:14px;width:100%" onclick="editGallery()">📁 ＋ Neue Dokumenten-Galerie</button>
       </div>
     </div>`;
-  const za=$('#zoneActive'),zv=$('#zoneAvail');
+  const za=$('#zoneActive',b),zv=$('#zoneAvail',b);
   layout.forEach((item,i)=>{
     const isG=item.type==='docgallery';
     const name=isG?item.title:(TILES[item.key]||{}).name||item.key;
