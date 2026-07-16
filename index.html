@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Abteilungsbildschirm</title>
+<style>
+:root{
+  /* Bühler-orientiertes Industriedesign */
+  --blue:#004b87;
+  --blue-dark:#00365f;
+  --blue-light:#e8f1f9;
+  --anthracite:#2b2f36;
+  --anthracite-2:#3a3f47;
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --border:#dce2e8;
+  --text:#1f2429;
+  --text-soft:#5b6570;
+  --shadow:0 2px 10px rgba(0,40,80,.08);
+  --shadow-lg:0 12px 40px rgba(0,40,80,.18);
+  --radius:16px;
+  /* Statusfarben */
+  --green:#2e9e5b;   --green-bg:#e6f6ec;
+  --yellow:#e0a400;  --yellow-bg:#fdf5df;
+  --red:#d63b3b;     --red-bg:#fbe7e7;
+  --info:#1976c8;    --info-bg:#e5f0fb;
+  --gray:#8a929b;    --gray-bg:#eef1f4;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--text);font-size:17px;line-height:1.4;
+  overflow-x:hidden;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:1rem}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-thumb{background:#c3ccd4;border-radius:8px;border:3px solid var(--bg)}
+
+/* ---------- Layout ---------- */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.hidden{display:none !important}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  display:flex;align-items:center;gap:20px;
+  background:var(--anthracite);color:#fff;
+  padding:14px 26px;position:sticky;top:0;z-index:40;
+  box-shadow:0 2px 12px rgba(0,0,0,.25);
+}
+.brand{display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none}
+.brand .logo{
+  width:46px;height:46px;border-radius:11px;background:var(--blue);
+  display:grid;place-items:center;font-weight:800;font-size:22px;letter-spacing:-1px;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.15);
+}
+.brand .title{font-size:20px;font-weight:700;line-height:1.1}
+.brand .subtitle{font-size:12.5px;color:#aeb7c1;font-weight:500}
+.topbar .clock{margin-left:6px;font-variant-numeric:tabular-nums;font-size:15px;color:#c7ced6}
+.spacer{flex:1}
+
+.dept-switch{
+  display:flex;align-items:center;gap:10px;background:var(--anthracite-2);
+  border-radius:12px;padding:8px 14px;cursor:pointer;transition:.15s;border:1px solid #4a4f57;
+}
+.dept-switch:hover{background:#464b53}
+.dept-switch .dot{width:11px;height:11px;border-radius:50%;background:var(--blue)}
+.dept-switch .name{font-weight:600;font-size:16px}
+.dept-switch .chev{color:#9aa3ad;font-size:13px}
+
+.user-chip{
+  display:flex;align-items:center;gap:11px;padding:7px 8px 7px 14px;
+  background:var(--anthracite-2);border-radius:30px;border:1px solid #4a4f57;
+}
+.user-chip .u-info{text-align:right;line-height:1.15}
+.user-chip .u-name{font-weight:600;font-size:14.5px}
+.user-chip .u-role{font-size:11.5px;color:#9aa3ad}
+.user-chip .avatar{
+  width:38px;height:38px;border-radius:50%;background:var(--blue);
+  display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;
+}
+.btn-icon-top{
+  width:44px;height:44px;border-radius:11px;background:var(--anthracite-2);
+  display:grid;place-items:center;font-size:19px;border:1px solid #4a4f57;transition:.15s;
+}
+.btn-icon-top:hover{background:#464b53}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 22px;border-radius:12px;font-weight:600;font-size:16px;
+  background:var(--blue);color:#fff;transition:.15s;white-space:nowrap;
+}
+.btn:hover{background:var(--blue-dark)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:#fff;color:var(--blue);border:2px solid var(--border)}
+.btn.ghost:hover{border-color:var(--blue);background:var(--blue-light)}
+.btn.subtle{background:var(--gray-bg);color:var(--text)}
+.btn.subtle:hover{background:#e2e7ec}
+.btn.danger{background:var(--red)}
+.btn.danger:hover{background:#b93030}
+.btn.sm{padding:9px 15px;font-size:14px;border-radius:10px}
+.btn.lg{padding:17px 30px;font-size:19px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- Main / Home ---------- */
+main{flex:1;padding:26px clamp(16px,4vw,42px)}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:16px}
+.page-head h1{font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-.5px;color:var(--anthracite)}
+.page-head .sub{color:var(--text-soft);font-size:16px;margin-top:4px}
+.breadcrumb{display:flex;align-items:center;gap:8px;color:var(--text-soft);font-size:15px;margin-bottom:14px}
+.breadcrumb b{color:var(--blue)}
+
+/* Ticker */
+.ticker{
+  display:flex;align-items:center;gap:14px;background:var(--red);color:#fff;
+  border-radius:12px;padding:12px 18px;margin-bottom:22px;overflow:hidden;box-shadow:var(--shadow);
+}
+.ticker.info{background:var(--info)}
+.ticker .lbl{font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:1px;background:rgba(255,255,255,.2);padding:5px 11px;border-radius:20px;white-space:nowrap}
+.ticker .track{flex:1;overflow:hidden;white-space:nowrap}
+.ticker .track span{display:inline-block;padding-left:100%;animation:scroll 26s linear infinite;font-weight:600;font-size:16px}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+
+/* Tiles grid */
+.tiles{
+  display:grid;gap:22px;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+}
+.tile{
+  background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
+  border:1px solid var(--border);overflow:hidden;cursor:pointer;
+  transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column;
+  min-height:210px;position:relative;
+}
+.tile:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+.tile:active{transform:translateY(-1px)}
+.tile .tile-top{padding:22px 22px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.tile .ic{
+  width:62px;height:62px;border-radius:15px;display:grid;place-items:center;font-size:31px;
+  background:var(--blue-light);
+}
+.tile .badge-count{
+  min-width:30px;height:30px;padding:0 9px;border-radius:15px;background:var(--red);color:#fff;
+  font-weight:700;font-size:15px;display:grid;place-items:center;
+}
+.tile .badge-count.q{background:var(--yellow)}
+.tile .tile-body{padding:16px 22px 22px;flex:1;display:flex;flex-direction:column}
+.tile h3{font-size:22px;font-weight:700;margin-bottom:6px;color:var(--anthracite)}
+.tile .desc{color:var(--text-soft);font-size:15px;flex:1}
+.tile .tile-foot{
+  display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:var(--text-soft);
+  padding-top:12px;border-top:1px solid var(--border);
+}
+.tile .pip{width:9px;height:9px;border-radius:50%}
+.tile.pinned::after{content:"★";position:absolute;top:14px;right:16px;color:var(--yellow);font-size:15px;opacity:0}
+
+/* status pips */
+.s-green{background:var(--green)} .s-yellow{background:var(--yellow)}
+.s-red{background:var(--red)} .s-info{background:var(--info)} .s-gray{background:var(--gray)}
+
+/* ---------- Badges / chips ---------- */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:20px;font-size:13px;font-weight:600}
+.badge .b-dot{width:8px;height:8px;border-radius:50%}
+.b-green{background:var(--green-bg);color:#1c6b3c} .b-green .b-dot{background:var(--green)}
+.b-yellow{background:var(--yellow-bg);color:#8a6400} .b-yellow .b-dot{background:var(--yellow)}
+.b-red{background:var(--red-bg);color:#a52626} .b-red .b-dot{background:var(--red)}
+.b-info{background:var(--info-bg);color:#1259a0} .b-info .b-dot{background:var(--info)}
+.b-gray{background:var(--gray-bg);color:#5b6570} .b-gray .b-dot{background:var(--gray)}
+
+/* ---------- Overlay / Modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(20,26,32,.55);backdrop-filter:blur(3px);
+  z-index:80;display:flex;align-items:stretch;justify-content:center;padding:0;
+  animation:fade .2s;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet{
+  background:var(--bg);width:100%;max-width:1400px;margin:0 auto;
+  display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:slideup .25s;
+}
+@keyframes slideup{from{transform:translateY(24px);opacity:.6}to{transform:translateY(0);opacity:1}}
+.sheet-head{
+  display:flex;align-items:center;gap:16px;padding:18px 26px;background:var(--card);
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;
+}
+.sheet-head .s-ic{width:52px;height:52px;border-radius:13px;background:var(--blue-light);display:grid;place-items:center;font-size:26px}
+.sheet-head h2{font-size:25px;font-weight:800;color:var(--anthracite)}
+.sheet-head .s-sub{font-size:14px;color:var(--text-soft)}
+.btn-back{
+  display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:12px;
+  background:var(--anthracite);color:#fff;font-weight:600;font-size:16px;
+}
+.btn-back:hover{background:#000}
+.btn-close{width:48px;height:48px;border-radius:12px;background:var(--gray-bg);display:grid;place-items:center;font-size:22px}
+.btn-close:hover{background:#e2e7ec}
+.sheet-body{flex:1;overflow-y:auto;padding:26px clamp(16px,3vw,34px)}
+
+/* Modal small (centered) */
+.modal-wrap{position:fixed;inset:0;background:rgba(20,26,32,.55);backdrop-filter:blur(3px);z-index:90;display:grid;place-items:center;padding:20px;animation:fade .2s}
+.modal{background:var(--card);border-radius:18px;width:100%;max-width:560px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg);animation:slideup .22s}
+.modal.wide{max-width:820px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border)}
+.modal-head h3{font-size:21px;font-weight:700}
+.modal-body{padding:22px 24px;overflow-y:auto}
+.modal-foot{display:flex;gap:12px;justify-content:flex-end;padding:16px 24px;border-top:1px solid var(--border);background:var(--bg)}
+
+/* ---------- Forms ---------- */
+.field{margin-bottom:18px}
+.field label{display:block;font-weight:600;font-size:14.5px;margin-bottom:7px;color:var(--anthracite)}
+.field label .req{color:var(--red)}
+.field .hint{font-size:12.5px;color:var(--text-soft);margin-top:5px}
+.input,.select,.textarea{
+  width:100%;padding:13px 15px;border:2px solid var(--border);border-radius:11px;
+  background:#fff;color:var(--text);transition:.15s;
+}
+.input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,75,135,.1)}
+.textarea{resize:vertical;min-height:90px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.check{display:flex;align-items:center;gap:11px;padding:12px 15px;border:2px solid var(--border);border-radius:11px;cursor:pointer;transition:.15s}
+.check:hover{border-color:var(--blue)}
+.check input{width:20px;height:20px;accent-color:var(--blue)}
+
+/* ---------- Toolbar (Docs) ---------- */
+.toolbar{
+  display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:14px 16px;margin-bottom:20px;box-shadow:var(--shadow);
+}
+.search{flex:1;min-width:240px;display:flex;align-items:center;gap:10px;background:var(--bg);border:2px solid var(--border);border-radius:11px;padding:0 14px}
+.search:focus-within{border-color:var(--blue)}
+.search input{border:none;background:none;padding:13px 0;flex:1;outline:none;font-size:16px}
+.search .mag{font-size:18px;color:var(--text-soft)}
+.filter-select{padding:12px 14px;border:2px solid var(--border);border-radius:11px;background:#fff;font-size:15px;min-width:130px}
+
+/* ---------- Table ---------- */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse}
+thead th{
+  text-align:left;padding:15px 18px;font-size:13px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--text-soft);background:var(--bg);border-bottom:2px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;
+}
+thead th:hover{color:var(--blue)}
+tbody td{padding:15px 18px;border-bottom:1px solid var(--border);font-size:15px;vertical-align:middle}
+tbody tr{transition:.12s}
+tbody tr:hover{background:var(--blue-light)}
+tbody tr:last-child td{border-bottom:none}
+.file-cell{display:flex;align-items:center;gap:13px}
+.file-ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0}
+.fi-pdf{background:#d63b3b} .fi-doc{background:#2b579a} .fi-xls{background:#217346}
+.fi-ppt{background:#d24726} .fi-img{background:#7b4fc0} .fi-other{background:#6b7480}
+.file-cell .f-title{font-weight:600;color:var(--text)}
+.file-cell .f-name{font-size:12.5px;color:var(--text-soft)}
+.row-actions{display:flex;gap:7px;justify-content:flex-end}
+.ico-btn{width:38px;height:38px;border-radius:9px;background:var(--gray-bg);display:grid;place-items:center;font-size:16px;transition:.12s}
+.ico-btn:hover{background:#e2e7ec}
+.ico-btn.danger:hover{background:var(--red-bg);color:var(--red)}
+
+/* Doc grid cards (preview mode) */
+.doc-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.doc-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:.16s;display:flex;flex-direction:column}
+.doc-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.doc-thumb{height:150px;display:grid;place-items:center;font-size:44px;color:#fff;position:relative}
+.doc-thumb .imp{position:absolute;top:10px;left:10px;background:var(--yellow);color:#5a4200;font-size:11px;font-weight:800;padding:4px 9px;border-radius:16px;text-transform:uppercase;letter-spacing:.5px}
+.doc-card .dc-body{padding:14px 15px;flex:1;display:flex;flex-direction:column;gap:6px}
+.doc-card .dc-title{font-weight:700;font-size:16px}
+.doc-card .dc-meta{font-size:12.5px;color:var(--text-soft)}
+
+/* ---------- Info panels ---------- */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg)}
+.panel-head h3{font-size:18px;font-weight:700}
+.panel-body{padding:20px}
+.cols{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+
+/* KPI cards */
+.kpi-grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.kpi{background:var(--card);border:1px solid var(--border);border-left:6px solid var(--blue);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.kpi.g{border-left-color:var(--green)} .kpi.y{border-left-color:var(--yellow)} .kpi.r{border-left-color:var(--red)}
+.kpi .k-label{font-size:14px;color:var(--text-soft);font-weight:600}
+.kpi .k-val{font-size:40px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px;color:var(--anthracite)}
+.kpi .k-val small{font-size:20px;font-weight:600;color:var(--text-soft)}
+.kpi .k-trend{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:5px}
+.kpi .k-bar{height:8px;border-radius:5px;background:var(--gray-bg);margin-top:12px;overflow:hidden}
+.kpi .k-bar span{display:block;height:100%;border-radius:5px;background:var(--blue)}
+
+/* Shift plan */
+.shift-table td,.shift-table th{text-align:center}
+.shift-cell{font-weight:700;border-radius:8px;padding:8px 4px;font-size:14px}
+.sh-F{background:var(--info-bg);color:#1259a0} .sh-S{background:var(--yellow-bg);color:#8a6400}
+.sh-N{background:#e7e3f5;color:#5535a8} .sh-off{background:var(--gray-bg);color:#98a1aa}
+
+/* List rows (projects, tasks, events, news) */
+.list-row{display:flex;gap:16px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--border)}
+.list-row:last-child{border-bottom:none}
+.list-row:hover{background:var(--blue-light)}
+.lr-main{flex:1;min-width:0}
+.lr-title{font-weight:700;font-size:17px;margin-bottom:3px}
+.lr-sub{color:var(--text-soft);font-size:14px}
+.lr-side{text-align:right;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.prog{height:9px;border-radius:6px;background:var(--gray-bg);overflow:hidden;margin-top:8px;width:100%}
+.prog span{display:block;height:100%;border-radius:6px;background:var(--blue)}
+
+/* Events */
+.event-row{display:flex;gap:16px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.event-row:last-child{border-bottom:none}
+.date-chip{width:64px;height:64px;border-radius:12px;background:var(--blue);color:#fff;display:grid;place-items:center;text-align:center;flex-shrink:0;line-height:1.05}
+.date-chip .d{font-size:24px;font-weight:800}
+.date-chip .m{font-size:12px;text-transform:uppercase;letter-spacing:1px}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:10px;align-items:center}
+.toast{background:var(--anthracite);color:#fff;padding:14px 22px;border-radius:12px;font-weight:600;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:11px;animation:slideup .25s;min-width:280px}
+.toast.ok{background:var(--green)} .toast.err{background:var(--red)} .toast.info{background:var(--blue)}
+
+/* Dropzone */
+.dropzone{border:3px dashed var(--border);border-radius:16px;padding:34px 20px;text-align:center;transition:.15s;background:var(--bg);cursor:pointer}
+.dropzone.over{border-color:var(--blue);background:var(--blue-light)}
+.dropzone .dz-ic{font-size:46px;margin-bottom:10px}
+.dropzone h4{font-size:19px;margin-bottom:5px}
+.dropzone p{color:var(--text-soft);font-size:14px}
+.file-list{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.file-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:11px}
+.file-item .fi-name{flex:1;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-item .fi-size{font-size:12.5px;color:var(--text-soft)}
+
+/* Login */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--anthracite),var(--blue-dark));display:grid;place-items:center;z-index:100;padding:20px}
+.login-card{background:#fff;border-radius:22px;width:100%;max-width:430px;padding:40px 36px;box-shadow:var(--shadow-lg)}
+.login-card .logo{width:64px;height:64px;border-radius:16px;background:var(--blue);display:grid;place-items:center;font-weight:800;font-size:30px;color:#fff;margin:0 auto 18px}
+.login-card h2{text-align:center;font-size:26px;margin-bottom:5px}
+.login-card .lsub{text-align:center;color:var(--text-soft);margin-bottom:26px;font-size:15px}
+.quick-users{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.qu{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px solid var(--border);border-radius:12px;transition:.15s;text-align:left;width:100%}
+.qu:hover{border-color:var(--blue);background:var(--blue-light)}
+.qu .avatar{width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700}
+.qu .qu-info{flex:1}
+.qu .qu-name{font-weight:700}
+.qu .qu-role{font-size:12.5px;color:var(--text-soft)}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:22px;overflow-x:auto}
+.tab{padding:13px 20px;font-weight:600;font-size:16px;color:var(--text-soft);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab:hover{color:var(--blue)}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;color:var(--text-soft)}
+.empty .e-ic{font-size:56px;margin-bottom:14px;opacity:.6}
+.empty h3{font-size:20px;margin-bottom:6px;color:var(--text)}
+
+/* Preview area */
+.preview-stage{background:#2b2f36;border-radius:14px;min-height:420px;display:grid;place-items:center;padding:30px;position:relative;overflow:hidden}
+.preview-doc{background:#fff;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.4);max-width:640px;width:100%;padding:48px 54px;min-height:380px}
+.preview-doc h1{font-size:26px;margin-bottom:14px;color:#111}
+.preview-doc p{color:#444;margin-bottom:11px;font-size:15px;line-height:1.7}
+.preview-doc .ph-line{height:11px;background:#e6e9ed;border-radius:4px;margin-bottom:11px}
+.preview-img{max-width:100%;max-height:60vh;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.preview-file-ic{text-align:center;color:#fff}
+.preview-file-ic .big{font-size:90px;margin-bottom:14px}
+
+/* Meta grid in preview */
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 24px;margin-top:6px}
+.meta-item .m-k{font-size:12.5px;color:var(--text-soft);text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px}
+.meta-item .m-v{font-weight:600;font-size:15.5px}
+
+/* Version list */
+.ver-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+.ver-item:last-child{border-bottom:none}
+.ver-tag{background:var(--blue);color:#fff;font-weight:700;padding:3px 10px;border-radius:8px;font-size:13px}
+.ver-tag.old{background:var(--gray)}
+
+/* Audit log */
+.log-item{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--border);font-size:14.5px;align-items:flex-start}
+.log-item:last-child{border-bottom:none}
+.log-ic{width:36px;height:36px;border-radius:9px;background:var(--blue-light);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.log-time{color:var(--text-soft);font-size:12.5px;white-space:nowrap}
+
+/* Section title */
+.sec-title{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-soft);margin:26px 0 12px}
+.sec-title:first-child{margin-top:0}
+
+/* Responsive */
+@media(max-width:760px){
+  body{font-size:16px}
+  .topbar{padding:11px 14px;gap:10px;flex-wrap:wrap}
+  .brand .subtitle{display:none}
+  .user-chip .u-info{display:none}
+  .dept-switch .name{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  main{padding:18px 14px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .sheet-head{padding:14px 16px;flex-wrap:wrap}
+  .sheet-head h2{font-size:20px}
+  .clock{display:none}
+  thead th:nth-child(n+4),tbody td:nth-child(n+4){display:none}
+  .row-actions{flex-wrap:wrap}
+}
+.role-hide{display:none !important}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<!-- Login -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="logo">B</div>
+    <h2>Abteilungsbildschirm</h2>
+    <p class="lsub">Anmeldung — Rolle wählen für Demo</p>
+    <div class="quick-users" id="quickUsers"></div>
+    <div style="margin-top:22px;text-align:center">
+      <button class="btn ghost" style="width:100%" onclick="loginPublic()">🖥️ Als öffentlicher Bildschirm starten</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+<div id="overlayRoot"></div>
+<div id="modalRoot"></div>
+
+<script>
+/* =========================================================================
+   ABTEILUNGSBILDSCHIRM  —  Single-File Web App
+   Datenhaltung: localStorage (simuliert zentrale DB + Dateispeicher)
+   ========================================================================= */
+
+const LS_KEY = 'abt_bildschirm_v1';
+const ALLOWED_TYPES = ['pdf','doc','docx','xls','xlsx','ppt','pptx','png','jpg','jpeg','gif','svg'];
+const MAX_MB = 25;
+
+/* ---------- Seed / Default Data ---------- */
+function seed(){
+  const now = '2026-07-15';
+  return {
+    departments:[
+      {id:'prod', name:'Produktion', color:'#004b87', icon:'🏭', location:'Halle 3 · Uzwil'},
+      {id:'maint',name:'Instandhaltung', color:'#8a6400', icon:'🔧', location:'Werkstatt Nord'},
+      {id:'qa',   name:'Qualitätssicherung', color:'#2e9e5b', icon:'🔬', location:'Labor 1'},
+      {id:'log',  name:'Logistik', color:'#7b4fc0', icon:'🚚', location:'Zentrallager'},
+    ],
+    users:[
+      {id:'u1', name:'Anna Meier', role:'sysadmin', dept:null, initials:'AM', email:'anna.meier@firma.ch'},
+      {id:'u2', name:'Thomas Berg', role:'deptadmin', dept:'prod', initials:'TB', email:'thomas.berg@firma.ch'},
+      {id:'u3', name:'Sara Vogt', role:'deptadmin', dept:'qa', initials:'SV', email:'sara.vogt@firma.ch'},
+      {id:'u4', name:'Michael Roth', role:'employee', dept:'prod', initials:'MR', email:'michael.roth@firma.ch'},
+    ],
+    categories:['Arbeitsanweisung','Sicherheit','Wartung','Bericht','Formular','Zertifikat','Präsentation','Protokoll'],
+    documents:[
+      {id:'d1',dept:'prod',title:'Arbeitsanweisung Linie 4',desc:'Rüstvorgang und Parametereinstellung für Produktionslinie 4.',category:'Arbeitsanweisung',fileName:'AA_Linie4_Ruesten.pdf',fileType:'pdf',size:1840000,version:3,status:'published',owner:'Thomas Berg',important:true,uploaded:'2026-07-10',published:'2026-07-11',expires:'2027-07-11',project:'p1'},
+      {id:'d2',dept:'prod',title:'Sicherheitsdatenblatt Schmierstoff X',desc:'Umgang, Lagerung und Erste Hilfe für Schmierstoff X.',category:'Sicherheit',fileName:'SDB_Schmierstoff_X.pdf',fileType:'pdf',size:920000,version:1,status:'published',owner:'Thomas Berg',important:true,uploaded:'2026-06-28',published:'2026-06-28',expires:'',project:null},
+      {id:'d3',dept:'prod',title:'Wartungsplan Q3 2026',desc:'Übersicht geplanter Wartungen im dritten Quartal.',category:'Wartung',fileName:'Wartungsplan_Q3.xlsx',fileType:'xlsx',size:340000,version:2,status:'published',owner:'Thomas Berg',important:false,uploaded:'2026-07-01',published:'2026-07-02',expires:'',project:null},
+      {id:'d4',dept:'prod',title:'Layout Halle 3',desc:'Aktueller Hallenplan mit Maschinenstellplätzen.',category:'Bericht',fileName:'Layout_Halle3.png',fileType:'png',size:2600000,version:1,status:'published',owner:'Michael Roth',important:false,uploaded:'2026-06-20',published:'2026-06-20',expires:'',project:'p2'},
+      {id:'d5',dept:'prod',title:'Schulungsunterlage Neuanlage',desc:'Einführungspräsentation für Bedienpersonal.',category:'Präsentation',fileName:'Schulung_Neuanlage.pptx',fileType:'pptx',size:5400000,version:1,status:'draft',owner:'Thomas Berg',important:false,uploaded:'2026-07-14',published:'',expires:'',project:'p1'},
+      {id:'d6',dept:'prod',title:'Prüfprotokoll Charge 2291',desc:'Endkontrolle Charge 2291 – archiviert.',category:'Protokoll',fileName:'Protokoll_2291.pdf',fileType:'pdf',size:610000,version:1,status:'archived',owner:'Michael Roth',important:false,uploaded:'2026-05-12',published:'2026-05-12',expires:'',project:null},
+      {id:'d7',dept:'qa',title:'ISO 9001 Zertifikat',desc:'Gültiges Qualitätsmanagement-Zertifikat.',category:'Zertifikat',fileName:'ISO9001_2026.pdf',fileType:'pdf',size:480000,version:1,status:'published',owner:'Sara Vogt',important:true,uploaded:'2026-02-01',published:'2026-02-01',expires:'2029-02-01',project:null},
+      {id:'d8',dept:'qa',title:'Prüfformular Wareneingang',desc:'Standardformular für die Eingangsprüfung.',category:'Formular',fileName:'Pruefform_WE.docx',fileType:'docx',size:145000,version:4,status:'published',owner:'Sara Vogt',important:false,uploaded:'2026-07-08',published:'2026-07-08',expires:'',project:null},
+      {id:'d9',dept:'maint',title:'Ersatzteilliste Extruder',desc:'Aktuelle Ersatzteile inkl. Bestellnummern.',category:'Wartung',fileName:'ETL_Extruder.xlsx',fileType:'xlsx',size:220000,version:2,status:'published',owner:'Anna Meier',important:false,uploaded:'2026-06-15',published:'2026-06-15',expires:'',project:null},
+      {id:'d10',dept:'log',title:'Staplerführerschein-Nachweise',desc:'Übersicht gültiger Fahrberechtigungen.',category:'Zertifikat',fileName:'Stapler_Nachweise.pdf',fileType:'pdf',size:390000,version:1,status:'published',owner:'Anna Meier',important:false,uploaded:'2026-07-05',published:'2026-07-05',expires:'',project:null},
+    ],
+    projects:[
+      {id:'p1',dept:'prod',name:'Inbetriebnahme Linie 4',status:'yellow',progress:65,owner:'Thomas Berg',due:'2026-08-30',desc:'Aufbau, Test und Freigabe der neuen Produktionslinie 4.'},
+      {id:'p2',dept:'prod',name:'Layout-Optimierung Halle 3',status:'green',progress:100,owner:'Michael Roth',due:'2026-06-30',desc:'Neuanordnung der Maschinen zur Wegoptimierung.'},
+      {id:'p3',dept:'prod',name:'Energieeffizienz-Programm',status:'green',progress:40,owner:'Thomas Berg',due:'2026-11-15',desc:'Reduktion Energieverbrauch um 12%.'},
+      {id:'p4',dept:'qa',name:'Rezertifizierung ISO 9001',status:'yellow',progress:75,owner:'Sara Vogt',due:'2026-09-10',desc:'Vorbereitung Audit und Dokumentenreview.'},
+      {id:'p5',dept:'maint',name:'Predictive Maintenance Pilot',status:'red',progress:20,owner:'Anna Meier',due:'2026-07-20',desc:'Sensorik-Pilot an zwei Extrudern.'},
+    ],
+    kpis:[
+      {id:'k1',dept:'prod',label:'OEE Gesamt',value:'87',unit:'%',status:'green',trend:'+2.1',target:85,cur:87},
+      {id:'k2',dept:'prod',label:'Ausschussquote',value:'3.4',unit:'%',status:'yellow',trend:'+0.6',target:3,cur:3.4},
+      {id:'k3',dept:'prod',label:'Stückzahl heute',value:'12’480',unit:'St',status:'green',trend:'+4.0',target:100,cur:92},
+      {id:'k4',dept:'prod',label:'Ungeplante Stops',value:'2',unit:'',status:'red',trend:'+1',target:100,cur:100},
+      {id:'k5',dept:'qa',label:'Prüfquote',value:'99.2',unit:'%',status:'green',trend:'0.0',target:99,cur:99},
+      {id:'k6',dept:'maint',label:'MTBF',value:'214',unit:'h',status:'yellow',trend:'-8',target:100,cur:78},
+    ],
+    tasks:[ // Störungen & offene Aufgaben
+      {id:'t1',dept:'prod',title:'Störung: Sensor Linie 2 defekt',status:'red',prio:'Kritisch',assignee:'Instandhaltung',due:'2026-07-15',done:false},
+      {id:'t2',dept:'prod',title:'Ölwechsel Extruder E3 fällig',status:'yellow',prio:'Mittel',assignee:'Michael Roth',due:'2026-07-17',done:false},
+      {id:'t3',dept:'prod',title:'Palettierer neu kalibrieren',status:'yellow',prio:'Mittel',assignee:'Thomas Berg',due:'2026-07-18',done:false},
+      {id:'t4',dept:'prod',title:'Schutzgitter Linie 4 montiert',status:'green',prio:'Niedrig',assignee:'Michael Roth',due:'2026-07-12',done:true},
+      {id:'t5',dept:'qa',title:'Kalibrierung Messmittel überfällig',status:'red',prio:'Kritisch',assignee:'Sara Vogt',due:'2026-07-14',done:false},
+      {id:'t6',dept:'maint',title:'Ersatzteil Lager auffüllen',status:'yellow',prio:'Mittel',assignee:'Anna Meier',due:'2026-07-19',done:false},
+    ],
+    events:[
+      {id:'e1',dept:'prod',title:'Schichtübergabe-Meeting',date:'2026-07-16',time:'06:00',location:'Besprechungsraum A',type:'Meeting'},
+      {id:'e2',dept:'prod',title:'Sicherheitsunterweisung',date:'2026-07-22',time:'14:00',location:'Schulungsraum',type:'Schulung'},
+      {id:'e3',dept:'prod',title:'Werksrundgang Geschäftsleitung',date:'2026-07-28',time:'10:00',location:'Halle 3',type:'Besuch'},
+      {id:'e4',dept:'qa',title:'ISO-Audit Vorbesprechung',date:'2026-08-05',time:'09:00',location:'Labor 1',type:'Audit'},
+      {id:'e5',dept:'maint',title:'Wartungsfenster Anlage 1',date:'2026-07-20',time:'22:00',location:'Halle 3',type:'Wartung'},
+    ],
+    news:[ // Wichtige Meldungen
+      {id:'n1',dept:'prod',title:'Neue Sicherheitsschuhe ab Montag Pflicht',body:'Ab dem 20.07. gilt in allen Produktionshallen die neue PSA-Richtlinie. Sicherheitsschuhe der Klasse S3 sind verpflichtend. Ausgabe erfolgt über den Werksschutz.',status:'red',date:'2026-07-14',author:'Thomas Berg',pinned:true},
+      {id:'n2',dept:'prod',title:'Betriebsausflug am 30. August',body:'Der diesjährige Betriebsausflug führt uns an den Bodensee. Anmeldung bis 10.08. über den Aushang oder bei der Personalabteilung.',status:'info',date:'2026-07-12',author:'Anna Meier',pinned:false},
+      {id:'n3',dept:'prod',title:'Rekord: 1 Mio. Teile ohne Reklamation',body:'Ein grosses Dankeschön an das gesamte Team! Wir haben die Marke von einer Million produzierter Teile ohne Kundenreklamation erreicht.',status:'green',date:'2026-07-08',author:'Thomas Berg',pinned:false},
+      {id:'n4',dept:'qa',title:'Neue Prüfrichtlinie in Kraft',body:'Die überarbeitete Prüfrichtlinie QR-2026-03 ist ab sofort gültig.',status:'yellow',date:'2026-07-10',author:'Sara Vogt',pinned:true},
+    ],
+    shifts:{ // Schichtplan pro Abteilung (Woche)
+      prod:{
+        days:['Mo','Di','Mi','Do','Fr'],
+        rows:[
+          {name:'Team A',shifts:['F','F','F','S','S']},
+          {name:'Team B',shifts:['S','S','S','N','N']},
+          {name:'Team C',shifts:['N','N','off','F','F']},
+        ]
+      },
+      qa:{days:['Mo','Di','Mi','Do','Fr'],rows:[{name:'Labor 1',shifts:['F','F','F','F','F']},{name:'Labor 2',shifts:['S','S','off','S','S']}]},
+      maint:{days:['Mo','Di','Mi','Do','Fr'],rows:[{name:'Schicht 1',shifts:['F','F','F','F','F']},{name:'Bereitschaft',shifts:['N','N','N','N','N']}]},
+      log:{days:['Mo','Di','Mi','Do','Fr'],rows:[{name:'Wareneingang',shifts:['F','F','F','F','F']},{name:'Versand',shifts:['S','S','S','S','S']}]},
+    },
+    info:{ // Abteilungsinformationen
+      prod:{lead:'Thomas Berg',phone:'+41 71 000 12 34',members:42,mission:'Zuverlässige, effiziente und sichere Fertigung von Kernkomponenten. Wir stehen für Qualität, kontinuierliche Verbesserung und Termintreue.',hours:'Mo–Fr, 3-Schicht-Betrieb'},
+      qa:{lead:'Sara Vogt',phone:'+41 71 000 45 67',members:11,mission:'Sicherstellung höchster Produktqualität durch systematische Prüfung und Prozessüberwachung.',hours:'Mo–Fr 06:00–22:00'},
+      maint:{lead:'Anna Meier',phone:'+41 71 000 78 90',members:8,mission:'Maximale Anlagenverfügbarkeit durch vorbeugende und schnelle Instandhaltung.',hours:'24/7 Bereitschaft'},
+      log:{lead:'Anna Meier',phone:'+41 71 000 78 90',members:15,mission:'Effiziente Material- und Warenflüsse vom Wareneingang bis zum Versand.',hours:'Mo–Fr 05:00–20:00'},
+    },
+    tileOrder:['news','shift','tasks','kpis','projects','docs','events','info'],
+    log:[
+      {id:'l1',time:'2026-07-14 15:32',user:'Thomas Berg',action:'Meldung veröffentlicht',target:'Neue Sicherheitsschuhe ab Montag Pflicht',ic:'📢'},
+      {id:'l2',time:'2026-07-14 11:05',user:'Thomas Berg',action:'Dokument hochgeladen',target:'Schulungsunterlage Neuanlage (Entwurf)',ic:'📤'},
+      {id:'l3',time:'2026-07-11 09:20',user:'Thomas Berg',action:'Dokument aktualisiert → v3',target:'Arbeitsanweisung Linie 4',ic:'♻️'},
+    ]
+  };
+}
+
+/* ---------- State ---------- */
+let DB = load();
+let session = { user:null, dept:'prod' }; // user null = öffentlicher Modus
+let ui = { docView:'table', docSearch:'', docFilters:{cat:'',type:'',status:'',imp:false}, docSort:'date' };
+
+function load(){
+  try{ const s=localStorage.getItem(LS_KEY); if(s) return JSON.parse(s); }catch(e){}
+  const d=seed(); localStorage.setItem(LS_KEY,JSON.stringify(d)); return d;
+}
+function save(){ localStorage.setItem(LS_KEY,JSON.stringify(DB)); }
+function resetDB(){ localStorage.removeItem(LS_KEY); DB=load(); toast('Daten zurückgesetzt','info'); render(); }
+
+/* ---------- Helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+const uid=p=>p+Math.random().toString(36).slice(2,8);
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmtSize(b){if(!b)return '—';const u=['B','KB','MB','GB'];let i=0,n=b;while(n>=1024&&i<3){n/=1024;i++;}return n.toFixed(n<10&&i>0?1:0)+' '+u[i];}
+function fmtDate(s){if(!s)return '—';const[y,m,d]=s.split('-');return `${d}.${m}.${y}`;}
+function today(){return '2026-07-15';}
+function nowStamp(){return '2026-07-15 '+new Date().toTimeString().slice(0,5);}
+const dept=id=>DB.departments.find(d=>d.id===(id||session.dept));
+const user=()=>session.user;
+
+/* Role helpers */
+function isSys(){return user()&&user().role==='sysadmin';}
+function isAdmin(){const u=user();return u&&(u.role==='sysadmin'||u.role==='deptadmin');}
+function canEditDept(dId){const u=user();if(!u)return false;if(u.role==='sysadmin')return true;return u.role==='deptadmin'&&u.dept===dId;}
+function allowedDepts(){const u=user();if(!u)return DB.departments;if(u.role==='sysadmin')return DB.departments;if(u.role==='deptadmin')return DB.departments.filter(d=>d.id===u.dept);return DB.departments.filter(d=>d.id===u.dept);}
+
+/* filtered data for current dept, employees see only published */
+function visibleDocs(dId){let ds=DB.documents.filter(d=>d.dept===(dId||session.dept));if(!isAdmin())ds=ds.filter(d=>d.status==='published');return ds;}
+function pubOnly(arr,key='status'){return isAdmin()?arr:arr.filter(x=>x[key]!=='draft'&&x[key]!=='archived');}
+
+const FILE_ICO={pdf:['fi-pdf','PDF'],doc:['fi-doc','DOC'],docx:['fi-doc','DOC'],xls:['fi-xls','XLS'],xlsx:['fi-xls','XLS'],ppt:['fi-ppt','PPT'],pptx:['fi-ppt','PPT'],png:['fi-img','IMG'],jpg:['fi-img','IMG'],jpeg:['fi-img','IMG'],gif:['fi-img','IMG'],svg:['fi-img','IMG']};
+function fileMeta(t){return FILE_ICO[t]||['fi-other',(t||'?').toUpperCase().slice(0,3)];}
+const STATUS_BADGE={published:['b-green','Freigegeben'],draft:['b-gray','Entwurf'],archived:['b-gray','Archiviert'],green:['b-green','OK'],yellow:['b-yellow','Achtung'],red:['b-red','Kritisch'],info:['b-info','Info']};
+function badge(st,txt){const[c,d]=STATUS_BADGE[st]||['b-gray',st];return `<span class="badge ${c}"><span class="b-dot"></span>${esc(txt||d)}</span>`;}
+
+/* ---------- Toast ---------- */
+function toast(msg,type=''){const t=el('div','toast '+type);t.innerHTML=`<span>${type==='ok'?'✓':type==='err'?'✕':type==='info'?'ℹ':'•'}</span> ${esc(msg)}`;$('#toastWrap').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.3s';setTimeout(()=>t.remove(),300);},2600);}
+
+/* ---------- Log ---------- */
+function logAction(action,target,ic='•'){DB.log.unshift({id:uid('l'),time:nowStamp(),user:user()?user().name:'System',action,target,ic});DB.log=DB.log.slice(0,60);save();}
+
+/* =========================================================================
+   TILE DEFINITIONS
+   ========================================================================= */
+const TILES={
+  shift:{name:'Schichtplan',icon:'📅',bg:'#e5f0fb',desc:'Aktuelle Schichteinteilung der Woche',status:'info'},
+  info:{name:'Abteilungsinformationen',icon:'ℹ️',bg:'#e8f1f9',desc:'Team, Kontakt und Leitbild',status:'info'},
+  projects:{name:'Projekte',icon:'📊',bg:'#eef1f4',desc:'Laufende Projekte und Status'},
+  kpis:{name:'Kennzahlen',icon:'📈',bg:'#e6f6ec',desc:'Aktuelle Leistungskennzahlen'},
+  tasks:{name:'Störungen & Aufgaben',icon:'⚠️',bg:'#fbe7e7',desc:'Offene Punkte und Störungen'},
+  docs:{name:'Dokumente',icon:'📁',bg:'#fdf5df',desc:'Alle freigegebenen Dokumente'},
+  events:{name:'Termine & Veranstaltungen',icon:'🗓️',bg:'#e7e3f5',desc:'Anstehende Termine'},
+  news:{name:'Wichtige Meldungen',icon:'📢',bg:'#fbe7e7',desc:'Aktuelle Mitteilungen'},
+};
+
+/* =========================================================================
+   RENDER: TOPBAR + HOME
+   ========================================================================= */
+function render(){
+  const app=$('#app');
+  app.innerHTML='';
+  app.appendChild(topbar());
+  const main=el('main');
+  main.id='mainView';
+  app.appendChild(main);
+  renderHome(main);
+}
+
+function topbar(){
+  const d=dept();
+  const bar=el('div','topbar');
+  bar.innerHTML=`
+    <div class="brand" onclick="goHome()">
+      <div class="logo">B</div>
+      <div>
+        <div class="title">Abteilungsbildschirm</div>
+        <div class="subtitle">Digitale Informationszentrale</div>
+      </div>
+    </div>
+    <div class="clock" id="clock"></div>
+    <div class="spacer"></div>
+    <div class="dept-switch" onclick="openDeptSwitch()">
+      <span class="dot" style="background:${d.color}"></span>
+      <span style="font-size:20px">${d.icon}</span>
+      <span class="name">${esc(d.name)}</span>
+      <span class="chev">▼</span>
+    </div>
+    ${isAdmin()?`<button class="btn-icon-top" title="Administration" onclick="openAdmin()">⚙️</button>`:''}
+    ${isSys()?`<button class="btn-icon-top" title="Benutzerverwaltung" onclick="openUsers()">👥</button>`:''}
+    ${userChip()}
+  `;
+  return bar;
+}
+function userChip(){
+  const u=user();
+  if(!u) return `<button class="btn sm" onclick="showLogin()">🔑 Anmelden</button>`;
+  const rn={sysadmin:'System-Admin',deptadmin:'Abteilungs-Admin',employee:'Mitarbeiter/in'}[u.role];
+  return `<div class="user-chip">
+    <div class="u-info"><div class="u-name">${esc(u.name)}</div><div class="u-role">${rn}</div></div>
+    <div class="avatar">${esc(u.initials)}</div>
+    <button class="btn-icon-top" title="Abmelden" onclick="logout()" style="background:transparent;border:none;width:34px">⎋</button>
+  </div>`;
+}
+
+function goHome(){ closeOverlay(); const m=$('#mainView'); if(m){m.innerHTML='';renderHome(m);} }
+
+function renderHome(main){
+  const d=dept();
+  // Ticker: kritische news
+  const crit=pubOnly(DB.news.filter(n=>n.dept===d.id)).filter(n=>n.status==='red'||n.status==='yellow');
+  let html='';
+  if(crit.length){
+    const isRed=crit.some(n=>n.status==='red');
+    html+=`<div class="ticker ${isRed?'':'info'}"><span class="lbl">${isRed?'⚠ Wichtig':'ℹ Hinweis'}</span><div class="track"><span>${crit.map(n=>esc(n.title)).join('  ●  ')}  ●  ${crit.map(n=>esc(n.title)).join('  ●  ')}</span></div></div>`;
+  }
+  html+=`<div class="page-head">
+    <div>
+      <h1>${d.icon} ${esc(d.name)}</h1>
+      <div class="sub">${esc(d.location)} · ${DB.info[d.id]?DB.info[d.id].members+' Mitarbeitende':''} · Übersicht ${fmtDate(today())}</div>
+    </div>
+    ${isAdmin()?`<button class="btn ghost" onclick="openAdmin()">⚙️ Inhalte verwalten</button>`:''}
+  </div>`;
+
+  html+='<div class="tiles" id="tiles"></div>';
+  main.innerHTML=html;
+
+  const grid=$('#tiles',main);
+  const order=DB.tileOrder||Object.keys(TILES);
+  order.forEach(key=>{
+    const t=TILES[key];if(!t)return;
+    grid.appendChild(tileEl(key,t,d));
+  });
+}
+
+function counts(key,dId){
+  switch(key){
+    case 'tasks':{const t=pubOnly(DB.tasks.filter(x=>x.dept===dId)).filter(x=>!x.done);return{n:t.filter(x=>x.status==='red').length,q:t.length};}
+    case 'docs':return{n:0,q:visibleDocs(dId).length};
+    case 'news':return{n:pubOnly(DB.news.filter(x=>x.dept===dId)).filter(n=>n.status==='red').length,q:pubOnly(DB.news.filter(x=>x.dept===dId)).length};
+    case 'projects':return{n:DB.projects.filter(x=>x.dept===dId&&x.status==='red').length,q:DB.projects.filter(x=>x.dept===dId).length};
+    case 'events':return{n:0,q:DB.events.filter(x=>x.dept===dId).length};
+    case 'kpis':return{n:DB.kpis.filter(x=>x.dept===dId&&x.status==='red').length,q:DB.kpis.filter(x=>x.dept===dId).length};
+    default:return{n:0,q:0};
+  }
+}
+function statusPip(key,dId){
+  if(key==='tasks'||key==='kpis'){const c=counts(key,dId);if(c.n>0)return['s-red','Kritisch'];}
+  if(key==='projects'){if(DB.projects.some(p=>p.dept===dId&&p.status==='red'))return['s-red','Achtung'];if(DB.projects.some(p=>p.dept===dId&&p.status==='yellow'))return['s-yellow','In Arbeit'];return['s-green','OK'];}
+  if(key==='news'){const c=counts('news',dId);if(c.n>0)return['s-red','Wichtig'];}
+  return['s-green','Aktuell'];
+}
+
+function tileEl(key,t,d){
+  const c=counts(key,d.id);
+  const[pip,pipTxt]=statusPip(key,d.id);
+  const tile=el('div','tile');
+  tile.onclick=()=>openTile(key);
+  let badgeHtml='';
+  if(c.n>0)badgeHtml=`<span class="badge-count">${c.n}</span>`;
+  else if(c.q>0&&(key==='docs'||key==='tasks'||key==='news'||key==='events'))badgeHtml=`<span class="badge-count q" style="background:var(--blue)">${c.q}</span>`;
+  tile.innerHTML=`
+    <div class="tile-top">
+      <div class="ic" style="background:${t.bg}">${t.icon}</div>
+      ${badgeHtml}
+    </div>
+    <div class="tile-body">
+      <h3>${esc(t.name)}</h3>
+      <div class="desc">${esc(t.desc)}</div>
+      <div class="tile-foot"><span class="pip ${pip}"></span> ${pipTxt}</div>
+    </div>`;
+  return tile;
+}
+
+/* =========================================================================
+   OVERLAY (Detail sheets)
+   ========================================================================= */
+function openOverlay(node){closeOverlay();const o=el('div','overlay');o.id='ovl';o.appendChild(node);o.addEventListener('mousedown',e=>{if(e.target===o)closeOverlay();});$('#overlayRoot').appendChild(o);document.body.style.overflow='hidden';}
+function closeOverlay(){const o=$('#ovl');if(o)o.remove();document.body.style.overflow='';}
+function sheet(title,icon,sub,bodyNode,headExtra=''){
+  const s=el('div','sheet');
+  const head=el('div','sheet-head');
+  head.innerHTML=`
+    <button class="btn-back" onclick="closeOverlay()">← Zurück</button>
+    <div class="s-ic">${icon}</div>
+    <div style="flex:1"><h2>${esc(title)}</h2>${sub?`<div class="s-sub">${esc(sub)}</div>`:''}</div>
+    ${headExtra}
+    <button class="btn-close" onclick="closeOverlay()">✕</button>`;
+  s.appendChild(head);
+  const body=el('div','sheet-body');
+  if(typeof bodyNode==='string')body.innerHTML=bodyNode;else body.appendChild(bodyNode);
+  s.appendChild(body);
+  return s;
+}
+
+function openTile(key){
+  const d=dept();
+  const renderers={
+    docs:renderDocsView, shift:renderShift, info:renderInfo, projects:renderProjects,
+    kpis:renderKpis, tasks:renderTasks, events:renderEvents, news:renderNews
+  };
+  const t=TILES[key];
+  const body=el('div');
+  renderers[key](body,d);
+  const editBtn=canEditDept(d.id)&&key!=='docs'?`<button class="btn ghost sm" onclick="openAdmin('${key}')">✎ Bearbeiten</button>`:'';
+  openOverlay(sheet(t.name,t.icon,d.name,body,editBtn));
+}
+
+/* ---------- Detail: Schichtplan ---------- */
+function renderShift(body,d){
+  const s=DB.shifts[d.id];
+  if(!s){body.innerHTML=empty('📅','Kein Schichtplan hinterlegt');return;}
+  let rows=s.rows.map(r=>`<tr><td style="text-align:left;font-weight:700">${esc(r.name)}</td>${r.shifts.map(sh=>{
+    const map={F:['sh-F','Früh'],S:['sh-S','Spät'],N:['sh-N','Nacht'],off:['sh-off','Frei']};
+    const[cls,lbl]=map[sh]||['sh-off',sh];
+    return `<td><div class="shift-cell ${cls}">${lbl}</div></td>`;}).join('')}</tr>`).join('');
+  body.innerHTML=`
+    <div class="panel"><div class="panel-body" style="overflow-x:auto">
+      <table class="shift-table"><thead><tr><th style="text-align:left">Team</th>${s.days.map(dd=>`<th>${dd}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+    </div></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+      <span class="badge b-info"><span class="b-dot"></span>Früh 06–14</span>
+      <span class="badge b-yellow"><span class="b-dot"></span>Spät 14–22</span>
+      <span class="badge" style="background:#e7e3f5;color:#5535a8"><span class="b-dot" style="background:#5535a8"></span>Nacht 22–06</span>
+      <span class="badge b-gray"><span class="b-dot"></span>Frei</span>
+    </div>`;
+}
+
+/* ---------- Detail: Abteilungsinformationen ---------- */
+function renderInfo(body,d){
+  const i=DB.info[d.id]||{};
+  body.innerHTML=`
+    <div class="cols">
+      <div class="panel"><div class="panel-head"><h3>Leitbild</h3></div><div class="panel-body"><p style="font-size:17px;line-height:1.6">${esc(i.mission||'—')}</p></div></div>
+      <div class="panel"><div class="panel-head"><h3>Kontakt & Team</h3></div><div class="panel-body">
+        <div class="meta-grid">
+          <div class="meta-item"><div class="m-k">Abteilungsleitung</div><div class="m-v">${esc(i.lead||'—')}</div></div>
+          <div class="meta-item"><div class="m-k">Telefon</div><div class="m-v">${esc(i.phone||'—')}</div></div>
+          <div class="meta-item"><div class="m-k">Mitarbeitende</div><div class="m-v">${i.members||'—'}</div></div>
+          <div class="meta-item"><div class="m-k">Betriebszeiten</div><div class="m-v">${esc(i.hours||'—')}</div></div>
+          <div class="meta-item"><div class="m-k">Standort</div><div class="m-v">${esc(d.location)}</div></div>
+        </div>
+      </div></div>
+    </div>`;
+}
+
+/* ---------- Detail: Projekte ---------- */
+function renderProjects(body,d){
+  const ps=DB.projects.filter(p=>p.dept===d.id);
+  if(!ps.length){body.innerHTML=empty('📊','Keine Projekte');return;}
+  const panel=el('div','panel');
+  panel.innerHTML=`<div class="panel-head"><h3>${ps.length} Projekte</h3></div>`;
+  const b=el('div');
+  ps.forEach(p=>{
+    const[bc,bt]=STATUS_BADGE[p.status];
+    b.appendChild(el('div','list-row',`
+      <div class="lr-main">
+        <div class="lr-title">${esc(p.name)}</div>
+        <div class="lr-sub">${esc(p.desc)}</div>
+        <div class="prog"><span style="width:${p.progress}%;background:${p.status==='red'?'var(--red)':p.status==='yellow'?'var(--yellow)':'var(--green)'}"></span></div>
+      </div>
+      <div class="lr-side">
+        ${badge(p.status,bt)}
+        <div style="font-size:13px;color:var(--text-soft)">👤 ${esc(p.owner)}</div>
+        <div style="font-size:13px;color:var(--text-soft)">📅 ${fmtDate(p.due)}</div>
+        <div style="font-weight:700;font-size:18px">${p.progress}%</div>
+      </div>`));
+  });
+  panel.appendChild(b);body.appendChild(panel);
+}
+
+/* ---------- Detail: Kennzahlen ---------- */
+function renderKpis(body,d){
+  const ks=DB.kpis.filter(k=>k.dept===d.id);
+  if(!ks.length){body.innerHTML=empty('📈','Keine Kennzahlen');return;}
+  const grid=el('div','kpi-grid');
+  ks.forEach(k=>{
+    const cls={green:'g',yellow:'y',red:'r'}[k.status]||'';
+    const up=parseFloat(k.trend)>=0;
+    grid.appendChild(el('div','kpi '+cls,`
+      <div class="k-label">${esc(k.label)}</div>
+      <div class="k-val">${esc(k.value)} <small>${esc(k.unit)}</small></div>
+      <div class="k-trend" style="color:${up?'var(--green)':'var(--red)'}">${up?'▲':'▼'} ${esc(k.trend)}${k.unit==='%'?' Pp':''} ggü. Vorwoche</div>
+      ${k.target?`<div class="k-bar"><span style="width:${Math.min(100,k.cur/k.target*100)}%;background:${k.status==='red'?'var(--red)':k.status==='yellow'?'var(--yellow)':'var(--green)'}"></span></div>`:''}
+    `));
+  });
+  body.appendChild(grid);
+}
+
+/* ---------- Detail: Störungen & Aufgaben ---------- */
+function renderTasks(body,d){
+  const ts=pubOnly(DB.tasks.filter(t=>t.dept===d.id));
+  if(!ts.length){body.innerHTML=empty('⚠️','Keine offenen Aufgaben');return;}
+  const open=ts.filter(t=>!t.done),done=ts.filter(t=>t.done);
+  const wrap=el('div');
+  const mk=(t)=>{const[bc,bt]=STATUS_BADGE[t.status];return el('div','list-row',`
+    <div style="width:8px;align-self:stretch;border-radius:4px;background:${t.status==='red'?'var(--red)':t.status==='yellow'?'var(--yellow)':'var(--green)'}"></div>
+    <div class="lr-main">
+      <div class="lr-title" style="${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.title)}</div>
+      <div class="lr-sub">👤 ${esc(t.assignee)} · Fällig ${fmtDate(t.due)}</div>
+    </div>
+    <div class="lr-side">${badge(t.status,t.prio)}${canEditDept(d.id)?`<button class="btn sm ${t.done?'subtle':'ghost'}" onclick="toggleTask('${t.id}')">${t.done?'↺ Offen':'✓ Erledigt'}</button>`:''}</div>`);};
+  wrap.appendChild(el('div','sec-title',`Offen (${open.length})`));
+  const p1=el('div','panel');open.forEach(t=>p1.appendChild(mk(t)));if(!open.length)p1.innerHTML='<div class="panel-body" style="color:var(--text-soft)">Nichts offen 🎉</div>';wrap.appendChild(p1);
+  if(done.length){wrap.appendChild(el('div','sec-title',`Erledigt (${done.length})`));const p2=el('div','panel');done.forEach(t=>p2.appendChild(mk(t)));wrap.appendChild(p2);}
+  body.appendChild(wrap);
+}
+function toggleTask(id){const t=DB.tasks.find(x=>x.id===id);if(!t||!canEditDept(t.dept))return;t.done=!t.done;t.status=t.done?'green':'yellow';save();logAction(t.done?'Aufgabe erledigt':'Aufgabe geöffnet',t.title,'✓');const b=el('div');renderTasks(b,dept());const body=$('.sheet-body');if(body){body.innerHTML='';body.appendChild(b);}goHomeRefresh();}
+
+/* ---------- Detail: Termine ---------- */
+function renderEvents(body,d){
+  const es=DB.events.filter(e=>e.dept===d.id).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!es.length){body.innerHTML=empty('🗓️','Keine Termine');return;}
+  const M=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  const panel=el('div','panel');
+  es.forEach(e=>{
+    const[y,m,dd]=e.date.split('-');
+    panel.appendChild(el('div','event-row',`
+      <div class="date-chip"><div class="d">${dd}</div><div class="m">${M[+m-1]}</div></div>
+      <div class="lr-main"><div class="lr-title">${esc(e.title)}</div><div class="lr-sub">🕒 ${esc(e.time)} · 📍 ${esc(e.location)}</div></div>
+      <span class="badge b-info"><span class="b-dot"></span>${esc(e.type)}</span>`));
+  });
+  body.appendChild(panel);
+}
+
+/* ---------- Detail: Meldungen ---------- */
+function renderNews(body,d){
+  const ns=pubOnly(DB.news.filter(n=>n.dept===d.id)).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||b.date.localeCompare(a.date));
+  if(!ns.length){body.innerHTML=empty('📢','Keine Meldungen');return;}
+  const wrap=el('div');
+  ns.forEach(n=>{
+    const[bc,bt]=STATUS_BADGE[n.status];
+    const col={red:'var(--red)',yellow:'var(--yellow)',green:'var(--green)',info:'var(--info)'}[n.status];
+    const p=el('div','panel');p.style.borderLeft='6px solid '+col;
+    p.innerHTML=`<div class="panel-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+        ${n.pinned?'<span style="color:var(--yellow)">★</span>':''}
+        <h3 style="font-size:20px;flex:1">${esc(n.title)}</h3>
+        ${badge(n.status)}
+      </div>
+      <p style="font-size:16px;line-height:1.6;color:var(--text)">${esc(n.body)}</p>
+      <div style="margin-top:12px;font-size:13px;color:var(--text-soft)">👤 ${esc(n.author)} · ${fmtDate(n.date)}</div>
+    </div>`;
+    wrap.appendChild(p);
+  });
+  body.appendChild(wrap);
+}
+
+function empty(ic,txt,sub){return `<div class="empty"><div class="e-ic">${ic}</div><h3>${esc(txt)}</h3>${sub?`<p>${esc(sub)}</p>`:''}</div>`;}
+
+/* =========================================================================
+   DOCUMENTS VIEW (search / filter / sort / preview / upload)
+   ========================================================================= */
+function renderDocsView(body,d){
+  const wrap=el('div');
+  wrap.appendChild(docToolbar(d));
+  const listWrap=el('div');listWrap.id='docList';
+  wrap.appendChild(listWrap);
+  body.appendChild(wrap);
+  refreshDocList(d);
+}
+
+function docToolbar(d){
+  const cats=[...new Set(DB.documents.filter(x=>x.dept===d.id).map(x=>x.category))];
+  const tb=el('div','toolbar');
+  tb.innerHTML=`
+    <div class="search"><span class="mag">🔍</span><input id="docSearch" placeholder="Suche nach Titel, Dateiname, Kategorie, Stichwort…" value="${esc(ui.docSearch)}"></div>
+    <select class="filter-select" id="fCat"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${ui.docFilters.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+    <select class="filter-select" id="fType"><option value="">Alle Typen</option>${['pdf','docx','xlsx','pptx','png'].map(t=>`<option ${ui.docFilters.type===t?'selected':''}>${t.toUpperCase()}</option>`).join('')}</select>
+    ${isAdmin()?`<select class="filter-select" id="fStatus"><option value="">Alle Status</option><option value="published" ${ui.docFilters.status==='published'?'selected':''}>Freigegeben</option><option value="draft" ${ui.docFilters.status==='draft'?'selected':''}>Entwurf</option><option value="archived" ${ui.docFilters.status==='archived'?'selected':''}>Archiviert</option></select>`:''}
+    <select class="filter-select" id="fSort"><option value="date">Neueste zuerst</option><option value="name" ${ui.docSort==='name'?'selected':''}>Name A–Z</option><option value="prio" ${ui.docSort==='prio'?'selected':''}>Priorität</option></select>
+    <button class="btn subtle sm" id="fImp" onclick="toggleImp()">${ui.docFilters.imp?'★ Nur wichtige':'☆ Wichtige'}</button>
+    <button class="btn subtle sm" onclick="toggleDocView()">${ui.docView==='table'?'▦ Kacheln':'☰ Liste'}</button>
+    ${canEditDept(d.id)?`<button class="btn sm" onclick="openUpload()">＋ Hochladen</button>`:''}`;
+  // events
+  setTimeout(()=>{
+    $('#docSearch')?.addEventListener('input',e=>{ui.docSearch=e.target.value;refreshDocList(d);});
+    $('#fCat')?.addEventListener('change',e=>{ui.docFilters.cat=e.target.value;refreshDocList(d);});
+    $('#fType')?.addEventListener('change',e=>{ui.docFilters.type=e.target.value;refreshDocList(d);});
+    $('#fStatus')?.addEventListener('change',e=>{ui.docFilters.status=e.target.value;refreshDocList(d);});
+    $('#fSort')?.addEventListener('change',e=>{ui.docSort=e.target.value;refreshDocList(d);});
+  },0);
+  return tb;
+}
+function toggleImp(){ui.docFilters.imp=!ui.docFilters.imp;refreshDocList(dept());const b=$('#fImp');if(b)b.outerHTML;goRerenderToolbar();}
+function toggleDocView(){ui.docView=ui.docView==='table'?'grid':'table';goRerenderToolbar();}
+function goRerenderToolbar(){const body=el('div');renderDocsView(body,dept());const sb=$('.sheet-body');if(sb){sb.innerHTML='';sb.appendChild(body);}}
+
+function filterDocs(d){
+  let ds=visibleDocs(d.id);
+  const f=ui.docFilters,q=ui.docSearch.trim().toLowerCase();
+  if(q)ds=ds.filter(x=>[x.title,x.fileName,x.category,x.desc,x.owner].some(v=>(v||'').toLowerCase().includes(q)));
+  if(f.cat)ds=ds.filter(x=>x.category===f.cat);
+  if(f.type)ds=ds.filter(x=>x.fileType===f.type||(f.type==='png'&&['png','jpg','jpeg','gif','svg'].includes(x.fileType)));
+  if(f.status)ds=ds.filter(x=>x.status===f.status);
+  if(f.imp)ds=ds.filter(x=>x.important);
+  if(ui.docSort==='name')ds.sort((a,b)=>a.title.localeCompare(b.title));
+  else if(ui.docSort==='prio')ds.sort((a,b)=>(b.important?1:0)-(a.important?1:0)||b.uploaded.localeCompare(a.uploaded));
+  else ds.sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+  return ds;
+}
+
+function refreshDocList(d){
+  const host=$('#docList');if(!host)return;
+  const ds=filterDocs(d);
+  if(!ds.length){host.innerHTML=empty('📁','Keine Dokumente gefunden','Suche oder Filter anpassen');return;}
+  if(ui.docView==='grid'){host.innerHTML='';host.appendChild(docGrid(ds));return;}
+  // table
+  const rows=ds.map(x=>{
+    const[fc,ft]=fileMeta(x.fileType);
+    return `<tr onclick="openDoc('${x.id}')" style="cursor:pointer">
+      <td><div class="file-cell"><div class="file-ic ${fc}">${ft}</div><div><div class="f-title">${x.important?'★ ':''}${esc(x.title)}</div><div class="f-name">${esc(x.fileName)} · ${fmtSize(x.size)}</div></div></div></td>
+      <td><span class="badge b-info"><span class="b-dot"></span>${esc(x.category)}</span></td>
+      <td>${badge(x.status)}</td>
+      <td>v${x.version}</td>
+      <td>${esc(x.owner)}</td>
+      <td>${fmtDate(x.uploaded)}</td>
+      <td><div class="row-actions" onclick="event.stopPropagation()">
+        <button class="ico-btn" title="Vorschau" onclick="openDoc('${x.id}')">👁</button>
+        <button class="ico-btn" title="Download" onclick="downloadDoc('${x.id}')">⬇</button>
+        ${canEditDept(x.dept)?`<button class="ico-btn" title="Bearbeiten" onclick="openUpload('${x.id}')">✎</button><button class="ico-btn danger" title="Löschen" onclick="deleteDoc('${x.id}')">🗑</button>`:''}
+      </div></td></tr>`;
+  }).join('');
+  host.innerHTML=`<div style="margin-bottom:12px;color:var(--text-soft);font-size:14px">${ds.length} Dokument(e)</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th onclick="setSort('name')">Dokument</th><th>Kategorie</th><th>Status</th><th>Version</th><th>Verantwortlich</th><th onclick="setSort('date')">Upload</th><th style="text-align:right">Aktionen</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+}
+function setSort(s){ui.docSort=s;refreshDocList(dept());}
+function docGrid(ds){
+  const g=el('div','doc-grid');
+  ds.forEach(x=>{
+    const[fc,ft]=fileMeta(x.fileType);
+    const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
+    const c=el('div','doc-card');c.onclick=()=>openDoc(x.id);
+    const bg=fc==='fi-pdf'?'#d63b3b':fc==='fi-doc'?'#2b579a':fc==='fi-xls'?'#217346':fc==='fi-ppt'?'#d24726':fc==='fi-img'?'#7b4fc0':'#6b7480';
+    c.innerHTML=`<div class="doc-thumb" style="background:linear-gradient(135deg,${bg},${bg}cc)">
+        ${x.important?'<span class="imp">★ Wichtig</span>':''}
+        ${isImg?'🖼️':fc==='fi-pdf'?'📄':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':'📄'}
+      </div>
+      <div class="dc-body">
+        <div class="dc-title">${esc(x.title)}</div>
+        <div class="dc-meta">${esc(x.category)} · v${x.version} · ${fmtSize(x.size)}</div>
+        <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:8px">${badge(x.status)}<span style="font-size:12px;color:var(--text-soft)">${fmtDate(x.uploaded)}</span></div>
+      </div>`;
+    g.appendChild(c);
+  });
+  return g;
+}
+
+/* ---------- Document preview ---------- */
+function openDoc(id){
+  const x=DB.documents.find(d=>d.id===id);if(!x)return;
+  const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
+  const isPdf=x.fileType==='pdf';
+  const[fc,ft]=fileMeta(x.fileType);
+  let stage='';
+  if(isImg){
+    stage=`<div class="preview-stage"><svg class="preview-img" viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="400" fill="#e8eef4"/><rect x="40" y="40" width="560" height="240" rx="8" fill="#cdd8e2"/><circle cx="150" cy="150" r="45" fill="#a7b8c8"/><path d="M40 280 L200 160 L340 250 L460 130 L600 240 L600 280 Z" fill="#8fa6ba"/><text x="320" y="345" font-family="sans-serif" font-size="22" fill="#5b6570" text-anchor="middle">${esc(x.fileName)}</text></svg></div>`;
+  }else if(isPdf){
+    stage=`<div class="preview-stage"><div class="preview-doc">
+      <h1>${esc(x.title)}</h1>
+      <div style="color:#888;font-size:13px;margin-bottom:20px">${esc(x.fileName)} · Version ${x.version}</div>
+      <p>${esc(x.desc)}</p>
+      <div class="ph-line" style="width:100%"></div><div class="ph-line" style="width:92%"></div><div class="ph-line" style="width:96%"></div><div class="ph-line" style="width:70%"></div>
+      <div style="height:20px"></div>
+      <div class="ph-line" style="width:100%"></div><div class="ph-line" style="width:88%"></div><div class="ph-line" style="width:94%"></div><div class="ph-line" style="width:40%"></div>
+    </div></div>`;
+  }else{
+    stage=`<div class="preview-stage"><div class="preview-file-ic"><div class="big">${fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄'}</div><div style="font-size:20px;font-weight:600">${esc(x.fileName)}</div><div style="opacity:.7;margin-top:6px">Keine Inline-Vorschau · Download zum Öffnen</div></div></div>`;
+  }
+  const versions=Array.from({length:x.version},(_,i)=>x.version-i).map(v=>`<div class="ver-item"><span class="ver-tag ${v===x.version?'':'old'}">v${v}</span> ${v===x.version?'<b>Aktuelle Version</b>':'Frühere Version'} <span style="margin-left:auto;color:var(--text-soft);font-size:13px">${v===x.version?fmtDate(x.uploaded):'—'}</span>${v!==x.version?'<button class="btn sm subtle" style="margin-left:8px">Wiederherstellen</button>':''}</div>`).join('');
+
+  const body=el('div');
+  body.innerHTML=`
+    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:24px" class="doc-detail-grid">
+      <div>${stage}
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <button class="btn" onclick="downloadDoc('${x.id}')">⬇ Herunterladen</button>
+          ${canEditDept(x.dept)?`<button class="btn ghost" onclick="openUpload('${x.id}')">✎ Bearbeiten / Ersetzen</button>`:''}
+          ${canEditDept(x.dept)?`<button class="btn ghost" onclick="toggleImportant('${x.id}')">${x.important?'★ Wichtig entfernen':'☆ Als wichtig markieren'}</button>`:''}
+        </div>
+      </div>
+      <div>
+        <div class="panel"><div class="panel-head"><h3>Details</h3>${badge(x.status)}</div><div class="panel-body">
+          <p style="margin-bottom:16px;color:var(--text-soft)">${esc(x.desc)}</p>
+          <div class="meta-grid">
+            <div class="meta-item"><div class="m-k">Abteilung</div><div class="m-v">${esc(dept(x.dept).name)}</div></div>
+            <div class="meta-item"><div class="m-k">Kategorie</div><div class="m-v">${esc(x.category)}</div></div>
+            <div class="meta-item"><div class="m-k">Dateiname</div><div class="m-v" style="word-break:break-all">${esc(x.fileName)}</div></div>
+            <div class="meta-item"><div class="m-k">Dateityp / Grösse</div><div class="m-v">${x.fileType.toUpperCase()} · ${fmtSize(x.size)}</div></div>
+            <div class="meta-item"><div class="m-k">Version</div><div class="m-v">v${x.version}</div></div>
+            <div class="meta-item"><div class="m-k">Verantwortlich</div><div class="m-v">${esc(x.owner)}</div></div>
+            <div class="meta-item"><div class="m-k">Upload</div><div class="m-v">${fmtDate(x.uploaded)}</div></div>
+            <div class="meta-item"><div class="m-k">Veröffentlicht</div><div class="m-v">${fmtDate(x.published)}</div></div>
+            <div class="meta-item"><div class="m-k">Ablaufdatum</div><div class="m-v">${x.expires?fmtDate(x.expires):'—'}</div></div>
+            <div class="meta-item"><div class="m-k">Projekt</div><div class="m-v">${x.project?esc((DB.projects.find(p=>p.id===x.project)||{}).name||'—'):'—'}</div></div>
+          </div>
+        </div></div>
+        <div class="panel"><div class="panel-head"><h3>Versionsverlauf</h3></div><div class="panel-body">${versions}</div></div>
+      </div>
+    </div>`;
+  openOverlay(sheet(x.title,fc==='fi-pdf'?'📄':'📁','Dokumentvorschau · '+dept(x.dept).name,body));
+}
+function toggleImportant(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;x.important=!x.important;save();logAction(x.important?'Als wichtig markiert':'Wichtig-Markierung entfernt',x.title,'★');toast(x.important?'Als wichtig markiert':'Markierung entfernt','ok');openDoc(id);}
+function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;toast('Download gestartet: '+x.fileName,'ok');logAction('Dokument heruntergeladen',x.title,'⬇');}
+function deleteDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;confirmModal('Dokument löschen?',`«${x.title}» wird unwiderruflich gelöscht.`,'Löschen',()=>{DB.documents=DB.documents.filter(d=>d.id!==id);save();logAction('Dokument gelöscht',x.title,'🗑');toast('Dokument gelöscht','ok');refreshDocList(dept());goHomeRefresh();});}
+
+/* =========================================================================
+   UPLOAD / EDIT FORM
+   ========================================================================= */
+function openUpload(editId){
+  const d=dept();
+  const x=editId?DB.documents.find(e=>e.id===editId):null;
+  const cats=DB.categories;
+  const projs=DB.projects.filter(p=>p.dept===d.id);
+  const body=`
+    ${!x?`<div class="dropzone" id="dz">
+      <div class="dz-ic">📤</div><h4>Dateien hierher ziehen</h4>
+      <p>oder klicken zum Auswählen · PDF, Word, Excel, PowerPoint, Bilder · max. ${MAX_MB} MB</p>
+      <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.svg" style="display:none">
+      <div class="file-list" id="fileList"></div>
+    </div>`:`<div class="panel"><div class="panel-body" style="display:flex;align-items:center;gap:14px">
+      <div class="file-ic ${fileMeta(x.fileType)[0]}">${fileMeta(x.fileType)[1]}</div>
+      <div style="flex:1"><b>${esc(x.fileName)}</b><div style="font-size:13px;color:var(--text-soft)">Aktuell v${x.version} · ${fmtSize(x.size)}</div></div>
+      <label class="btn ghost sm" style="cursor:pointer">↻ Datei ersetzen<input type="file" id="replaceInput" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.svg"></label>
+    </div></div>`}
+    <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="upTitle" value="${x?esc(x.title):''}" placeholder="z.B. Arbeitsanweisung Linie 4"></div>
+    <div class="field"><label>Beschreibung</label><textarea class="textarea" id="upDesc" placeholder="Kurze Beschreibung des Inhalts…">${x?esc(x.desc):''}</textarea></div>
+    <div class="grid-2">
+      <div class="field"><label>Kategorie <span class="req">*</span></label>
+        <select class="select" id="upCat">${cats.map(c=>`<option ${x&&x.category===c?'selected':''}>${esc(c)}</option>`).join('')}<option value="__new">+ Neue Kategorie…</option></select>
+        <input class="input hidden" id="upCatNew" placeholder="Name neue Kategorie" style="margin-top:8px">
+      </div>
+      <div class="field"><label>Projekt / Themenbereich</label>
+        <select class="select" id="upProj"><option value="">— Keines —</option>${projs.map(p=>`<option value="${p.id}" ${x&&x.project===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="field"><label>Verantwortliche Person</label><input class="input" id="upOwner" value="${x?esc(x.owner):(user()?esc(user().name):'')}"></div>
+      <div class="field"><label>Veröffentlichungsdatum</label><input class="input" type="date" id="upPub" value="${x&&x.published?x.published:today()}"></div>
+      <div class="field"><label>Ablaufdatum (optional)</label><input class="input" type="date" id="upExp" value="${x?x.expires:''}"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Status</label><select class="select" id="upStatus">
+        <option value="draft" ${x&&x.status==='draft'?'selected':''}>Entwurf (nicht sichtbar)</option>
+        <option value="published" ${!x||x.status==='published'?'selected':''}>Freigegeben (öffentlich)</option>
+        <option value="archived" ${x&&x.status==='archived'?'selected':''}>Archiviert</option>
+      </select></div>
+      <label class="check" style="align-self:end;margin-bottom:18px"><input type="checkbox" id="upImp" ${x&&x.important?'checked':''}> <span>Als <b>wichtig</b> markieren</span></label>
+    </div>`;
+  const foot=`<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveUpload('${editId||''}')">${x?'✓ Speichern':'✓ Hochladen & Speichern'}</button>`;
+  openModal(x?'Dokument bearbeiten':'Neues Dokument hochladen',body,foot,true);
+  // wire dropzone
+  setTimeout(()=>{
+    const dz=$('#dz'),fi=$('#fileInput'),fl=$('#fileList');
+    if(dz){
+      dz.onclick=()=>fi.click();
+      fi.onchange=()=>showPicked(fi.files,fl);
+      ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
+      ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over');}));
+      dz.addEventListener('drop',e=>{fi.files=e.dataTransfer.files;showPicked(e.dataTransfer.files,fl);});
+    }
+    const cat=$('#upCat');cat.onchange=()=>{$('#upCatNew').classList.toggle('hidden',cat.value!=='__new');};
+  },0);
+}
+window._picked=[];
+function showPicked(files,host){
+  window._picked=[...files];host.innerHTML='';
+  [...files].forEach(f=>{
+    const ext=f.name.split('.').pop().toLowerCase();
+    const ok=ALLOWED_TYPES.includes(ext)&&f.size<=MAX_MB*1024*1024;
+    const[fc,ft]=fileMeta(ext);
+    host.appendChild(el('div','file-item',`
+      <div class="file-ic ${fc}" style="width:36px;height:36px;font-size:15px">${ft}</div>
+      <div class="fi-name">${esc(f.name)}</div>
+      <div class="fi-size">${fmtSize(f.size)}</div>
+      ${ok?'<span class="badge b-green"><span class="b-dot"></span>OK</span>':'<span class="badge b-red"><span class="b-dot"></span>Ungültig</span>'}`));
+  });
+}
+function saveUpload(editId){
+  const title=$('#upTitle').value.trim();
+  if(!title){toast('Titel erforderlich','err');return;}
+  let cat=$('#upCat').value;
+  if(cat==='__new'){cat=$('#upCatNew').value.trim();if(!cat){toast('Kategorie-Name fehlt','err');return;}if(!DB.categories.includes(cat))DB.categories.push(cat);}
+  const status=$('#upStatus').value;
+  const common={title,desc:$('#upDesc').value.trim(),category:cat,owner:$('#upOwner').value.trim()||'—',status,important:$('#upImp').checked,published:$('#upPub').value,expires:$('#upExp').value,project:$('#upProj').value||null};
+  if(editId){
+    const x=DB.documents.find(d=>d.id===editId);
+    const replaced=$('#replaceInput')&&$('#replaceInput').files.length;
+    Object.assign(x,common);
+    if(replaced){const f=$('#replaceInput').files[0];const ext=f.name.split('.').pop().toLowerCase();if(!ALLOWED_TYPES.includes(ext)){toast('Dateityp nicht erlaubt','err');return;}x.fileName=f.name;x.fileType=ext;x.size=f.size;x.version++;x.uploaded=today();}
+    save();logAction(replaced?`Dokument ersetzt → v${x.version}`:'Dokument bearbeitet',x.title,replaced?'♻️':'✎');
+    toast('Dokument gespeichert','ok');
+  }else{
+    const picked=window._picked||[];
+    if(!picked.length){toast('Bitte Datei auswählen','err');return;}
+    const invalid=picked.find(f=>{const e=f.name.split('.').pop().toLowerCase();return !ALLOWED_TYPES.includes(e)||f.size>MAX_MB*1024*1024;});
+    if(invalid){toast('Ungültiger Dateityp oder zu gross: '+invalid.name,'err');return;}
+    picked.forEach((f,idx)=>{
+      const ext=f.name.split('.').pop().toLowerCase();
+      DB.documents.unshift({id:uid('d'),dept:session.dept,fileName:f.name,fileType:ext,size:f.size,version:1,uploaded:today(),...common,title:picked.length>1?`${title} (${idx+1})`:title});
+    });
+    save();logAction('Dokument hochgeladen',title+(picked.length>1?` (${picked.length} Dateien)`:''),'📤');
+    toast(picked.length>1?picked.length+' Dokumente hochgeladen':'Dokument hochgeladen','ok');
+    window._picked=[];
+  }
+  closeModal();
+  const sb=$('.sheet-body');if(sb&&$('#docList')){refreshDocList(dept());}
+  else{goHome();}
+  goHomeRefresh();
+}
+
+/* =========================================================================
+   MODALS
+   ========================================================================= */
+function openModal(title,body,foot,wide){
+  closeModal();
+  const w=el('div','modal-wrap');w.id='mdl';
+  const m=el('div','modal'+(wide?' wide':''));
+  m.innerHTML=`<div class="modal-head"><h3>${esc(title)}</h3><button class="btn-close" onclick="closeModal()">✕</button></div><div class="modal-body">${body}</div>${foot?`<div class="modal-foot">${foot}</div>`:''}`;
+  w.appendChild(m);w.addEventListener('mousedown',e=>{if(e.target===w)closeModal();});
+  $('#modalRoot').appendChild(w);
+}
+function closeModal(){const m=$('#mdl');if(m)m.remove();}
+function confirmModal(title,msg,okTxt,onOk){
+  openModal(title,`<p style="font-size:16px;line-height:1.5">${esc(msg)}</p>`,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn danger" id="cfmOk">${esc(okTxt)}</button>`);
+  setTimeout(()=>{$('#cfmOk').onclick=()=>{closeModal();onOk();};},0);
+}
+
+/* =========================================================================
+   DEPARTMENT SWITCH
+   ========================================================================= */
+function openDeptSwitch(){
+  const dl=allowedDepts();
+  const body=`<div style="display:flex;flex-direction:column;gap:10px">
+    ${DB.departments.map(d=>{
+      const allowed=dl.some(x=>x.id===d.id);
+      return `<button class="qu" style="${d.id===session.dept?'border-color:var(--blue);background:var(--blue-light)':''};${allowed?'':'opacity:.45;cursor:not-allowed'}" ${allowed?`onclick="switchDept('${d.id}')"`:''}>
+        <div class="avatar" style="background:${d.color}">${d.icon}</div>
+        <div class="qu-info"><div class="qu-name">${esc(d.name)}</div><div class="qu-role">${esc(d.location)}</div></div>
+        ${d.id===session.dept?'<span style="color:var(--blue);font-weight:700">✓ Aktiv</span>':allowed?'':'<span style="font-size:12px">🔒 Keine Berechtigung</span>'}
+      </button>`;}).join('')}
+  </div>${!user()?'<p style="margin-top:14px;font-size:13px;color:var(--text-soft)">Im öffentlichen Modus sind alle Abteilungsbildschirme einsehbar.</p>':''}`;
+  openModal('Abteilung wechseln',body,null);
+}
+function switchDept(id){if(!allowedDepts().some(d=>d.id===id)){toast('Keine Berechtigung','err');return;}session.dept=id;closeModal();closeOverlay();render();toast('Abteilung: '+dept().name,'info');}
+
+/* =========================================================================
+   ADMIN AREA
+   ========================================================================= */
+let adminTab='content';
+function openAdmin(focus){
+  if(!isAdmin()){toast('Keine Berechtigung','err');return;}
+  adminTab=focus&&['news','tasks','projects','kpis','events','shift','info'].includes(focus)?focus:'content';
+  const body=el('div');
+  renderAdmin(body);
+  openOverlay(sheet('Administration','⚙️','Inhalte verwalten · '+dept().name,body));
+}
+function renderAdmin(host){
+  const d=dept();
+  const tabs=[['content','Übersicht'],['news','Meldungen'],['tasks','Aufgaben'],['projects','Projekte'],['kpis','Kennzahlen'],['events','Termine'],['info','Abteilung'],['tiles','Kachel-Reihenfolge'],['log','Protokoll']];
+  host.innerHTML=`<div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${adminTab===k?'active':''}" onclick="setAdminTab('${k}')">${l}</button>`).join('')}</div><div id="adminBody"></div>`;
+  const b=$('#adminBody',host);
+  ({content:adminContent,news:adminNews,tasks:adminTasks,projects:adminProjects,kpis:adminKpis,events:adminEvents,info:adminInfo,tiles:adminTiles,log:adminLog}[adminTab]||adminContent)(b,d);
+}
+function setAdminTab(k){adminTab=k;const host=$('.sheet-body');if(host){const b=el('div');renderAdmin(b);host.innerHTML='';host.appendChild(b);}}
+
+function adminContent(b,d){
+  const stats=[
+    ['Dokumente',DB.documents.filter(x=>x.dept===d.id).length,'📁','docs'],
+    ['Meldungen',DB.news.filter(x=>x.dept===d.id).length,'📢','news'],
+    ['Projekte',DB.projects.filter(x=>x.dept===d.id).length,'📊','projects'],
+    ['Offene Aufgaben',DB.tasks.filter(x=>x.dept===d.id&&!x.done).length,'⚠️','tasks'],
+    ['Termine',DB.events.filter(x=>x.dept===d.id).length,'🗓️','events'],
+    ['Kennzahlen',DB.kpis.filter(x=>x.dept===d.id).length,'📈','kpis'],
+  ];
+  b.innerHTML=`<p style="margin-bottom:18px;color:var(--text-soft)">Willkommen im Administrationsbereich. Wähle einen Bereich zum Bearbeiten. Änderungen an freigegebenen Inhalten erscheinen sofort auf dem Abteilungsbildschirm.</p>
+    <div class="kpi-grid">${stats.map(([l,n,ic,t])=>`<div class="kpi" style="cursor:pointer" onclick="setAdminTab('${t==='docs'?'content':t}')${t==='docs'?';closeOverlay();openTileDocs()':''}"><div class="k-label">${ic} ${l}</div><div class="k-val">${n}</div></div>`).join('')}</div>
+    <div class="sec-title">Schnellaktionen</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn" onclick="closeOverlay();openTileDocs();setTimeout(openUpload,300)">📤 Dokument hochladen</button>
+      <button class="btn ghost" onclick="setAdminTab('news');setTimeout(()=>editNews(),50)">📢 Meldung erstellen</button>
+      <button class="btn ghost" onclick="setAdminTab('tasks');setTimeout(()=>editTask(),50)">⚠️ Aufgabe erfassen</button>
+      <button class="btn ghost" onclick="setAdminTab('events');setTimeout(()=>editEvent(),50)">🗓️ Termin erfassen</button>
+    </div>`;
+}
+function openTileDocs(){const d=dept();const body=el('div');renderDocsView(body,d);openOverlay(sheet('Dokumente','📁',d.name,body));}
+
+/* Generic admin list builder */
+function adminList(b,items,cols,opts){
+  const head=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h3 style="font-size:20px">${opts.title} (${items.length})</h3>
+    <button class="btn" onclick="${opts.add}">＋ Neu</button></div>`;
+  if(!items.length){b.innerHTML=head+empty(opts.ic||'📄','Noch keine Einträge');return;}
+  const rows=items.map(it=>`<tr>${cols.map(c=>`<td>${c.render(it)}</td>`).join('')}
+    <td><div class="row-actions">
+      <button class="ico-btn" title="Bearbeiten" onclick="${opts.edit}('${it.id}')">✎</button>
+      <button class="ico-btn danger" title="Löschen" onclick="${opts.del}('${it.id}')">🗑</button>
+    </div></td></tr>`).join('');
+  b.innerHTML=head+`<div class="table-wrap"><table><thead><tr>${cols.map(c=>`<th>${c.h}</th>`).join('')}<th style="text-align:right">Aktionen</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+/* ----- Admin: News ----- */
+function adminNews(b,d){
+  adminList(b,DB.news.filter(n=>n.dept===d.id),[
+    {h:'Titel',render:n=>`${n.pinned?'★ ':''}<b>${esc(n.title)}</b>`},
+    {h:'Status',render:n=>badge(n.status)},
+    {h:'Autor',render:n=>esc(n.author)},
+    {h:'Datum',render:n=>fmtDate(n.date)},
+  ],{title:'Meldungen',ic:'📢',add:'editNews()',edit:'editNews',del:'delNews'});
+}
+function editNews(id){
+  const n=id?DB.news.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="nTitle" value="${n?esc(n.title):''}"></div>
+    <div class="field"><label>Text</label><textarea class="textarea" id="nBody" style="min-height:120px">${n?esc(n.body):''}</textarea></div>
+    <div class="grid-2">
+      <div class="field"><label>Statusfarbe</label><select class="select" id="nStatus">
+        <option value="info" ${n&&n.status==='info'?'selected':''}>🔵 Information</option>
+        <option value="green" ${n&&n.status==='green'?'selected':''}>🟢 Positiv / OK</option>
+        <option value="yellow" ${n&&n.status==='yellow'?'selected':''}>🟡 Achtung</option>
+        <option value="red" ${n&&n.status==='red'?'selected':''}>🔴 Kritisch</option>
+      </select></div>
+      <div class="field"><label>Datum</label><input class="input" type="date" id="nDate" value="${n?n.date:today()}"></div>
+    </div>
+    <label class="check"><input type="checkbox" id="nPin" ${n&&n.pinned?'checked':''}> <span>Oben anheften (★)</span></label>`;
+  openModal(n?'Meldung bearbeiten':'Neue Meldung',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveNews('${id||''}')">✓ Speichern</button>`,true);
+}
+function saveNews(id){
+  const title=$('#nTitle').value.trim();if(!title){toast('Titel fehlt','err');return;}
+  const data={title,body:$('#nBody').value.trim(),status:$('#nStatus').value,date:$('#nDate').value,pinned:$('#nPin').checked,author:user().name};
+  if(id){Object.assign(DB.news.find(x=>x.id===id),data);logAction('Meldung bearbeitet',title,'📢');}
+  else{DB.news.unshift({id:uid('n'),dept:session.dept,...data});logAction('Meldung veröffentlicht',title,'📢');}
+  save();toast('Meldung gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
+function delNews(id){const n=DB.news.find(x=>x.id===id);confirmModal('Meldung löschen?',`«${n.title}» löschen?`,'Löschen',()=>{DB.news=DB.news.filter(x=>x.id!==id);save();logAction('Meldung gelöscht',n.title,'🗑');toast('Gelöscht','ok');refreshAdmin();goHomeRefresh();});}
+
+/* ----- Admin: Tasks ----- */
+function adminTasks(b,d){
+  adminList(b,DB.tasks.filter(t=>t.dept===d.id),[
+    {h:'Aufgabe',render:t=>`<b style="${t.done?'text-decoration:line-through;opacity:.6':''}">${esc(t.title)}</b>`},
+    {h:'Status',render:t=>badge(t.status,t.prio)},
+    {h:'Zuständig',render:t=>esc(t.assignee)},
+    {h:'Fällig',render:t=>fmtDate(t.due)},
+  ],{title:'Störungen & Aufgaben',ic:'⚠️',add:'editTask()',edit:'editTask',del:'delTask'});
+}
+function editTask(id){
+  const t=id?DB.tasks.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="tTitle" value="${t?esc(t.title):''}"></div>
+    <div class="grid-2">
+      <div class="field"><label>Status / Dringlichkeit</label><select class="select" id="tStatus">
+        <option value="red" ${t&&t.status==='red'?'selected':''}>🔴 Kritisch</option>
+        <option value="yellow" ${!t||t.status==='yellow'?'selected':''}>🟡 Achtung</option>
+        <option value="green" ${t&&t.status==='green'?'selected':''}>🟢 Erledigt/OK</option>
+      </select></div>
+      <div class="field"><label>Priorität (Label)</label><input class="input" id="tPrio" value="${t?esc(t.prio):'Mittel'}"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Zuständig</label><input class="input" id="tAssignee" value="${t?esc(t.assignee):''}"></div>
+      <div class="field"><label>Fällig am</label><input class="input" type="date" id="tDue" value="${t?t.due:today()}"></div>
+    </div>
+    <label class="check"><input type="checkbox" id="tDone" ${t&&t.done?'checked':''}> <span>Als erledigt markieren</span></label>`;
+  openModal(t?'Aufgabe bearbeiten':'Neue Aufgabe',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveTask('${id||''}')">✓ Speichern</button>`);
+}
+function saveTask(id){
+  const title=$('#tTitle').value.trim();if(!title){toast('Titel fehlt','err');return;}
+  const done=$('#tDone').checked;
+  const data={title,status:done?'green':$('#tStatus').value,prio:$('#tPrio').value.trim()||'Mittel',assignee:$('#tAssignee').value.trim()||'—',due:$('#tDue').value,done};
+  if(id){Object.assign(DB.tasks.find(x=>x.id===id),data);logAction('Aufgabe bearbeitet',title,'⚠️');}
+  else{DB.tasks.unshift({id:uid('t'),dept:session.dept,...data});logAction('Aufgabe erfasst',title,'⚠️');}
+  save();toast('Gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
+function delTask(id){const t=DB.tasks.find(x=>x.id===id);confirmModal('Aufgabe löschen?',`«${t.title}» löschen?`,'Löschen',()=>{DB.tasks=DB.tasks.filter(x=>x.id!==id);save();logAction('Aufgabe gelöscht',t.title,'🗑');toast('Gelöscht','ok');refreshAdmin();goHomeRefresh();});}
+
+/* ----- Admin: Projects ----- */
+function adminProjects(b,d){
+  adminList(b,DB.projects.filter(p=>p.dept===d.id),[
+    {h:'Projekt',render:p=>`<b>${esc(p.name)}</b>`},
+    {h:'Status',render:p=>badge(p.status)},
+    {h:'Fortschritt',render:p=>p.progress+'%'},
+    {h:'Fällig',render:p=>fmtDate(p.due)},
+  ],{title:'Projekte',ic:'📊',add:'editProject()',edit:'editProject',del:'delProject'});
+}
+function editProject(id){
+  const p=id?DB.projects.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Name <span class="req">*</span></label><input class="input" id="pName" value="${p?esc(p.name):''}"></div>
+    <div class="field"><label>Beschreibung</label><textarea class="textarea" id="pDesc">${p?esc(p.desc):''}</textarea></div>
+    <div class="grid-3">
+      <div class="field"><label>Status</label><select class="select" id="pStatus">
+        <option value="green" ${!p||p.status==='green'?'selected':''}>🟢 Im Plan</option>
+        <option value="yellow" ${p&&p.status==='yellow'?'selected':''}>🟡 Achtung</option>
+        <option value="red" ${p&&p.status==='red'?'selected':''}>🔴 Kritisch</option>
+      </select></div>
+      <div class="field"><label>Fortschritt %</label><input class="input" type="number" min="0" max="100" id="pProg" value="${p?p.progress:0}"></div>
+      <div class="field"><label>Fällig</label><input class="input" type="date" id="pDue" value="${p?p.due:today()}"></div>
+    </div>
+    <div class="field"><label>Verantwortlich</label><input class="input" id="pOwner" value="${p?esc(p.owner):(user()?esc(user().name):'')}"></div>`;
+  openModal(p?'Projekt bearbeiten':'Neues Projekt',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveProject('${id||''}')">✓ Speichern</button>`,true);
+}
+function saveProject(id){
+  const name=$('#pName').value.trim();if(!name){toast('Name fehlt','err');return;}
+  const data={name,desc:$('#pDesc').value.trim(),status:$('#pStatus').value,progress:Math.max(0,Math.min(100,+$('#pProg').value||0)),due:$('#pDue').value,owner:$('#pOwner').value.trim()||'—'};
+  if(id){Object.assign(DB.projects.find(x=>x.id===id),data);logAction('Projekt bearbeitet',name,'📊');}
+  else{DB.projects.unshift({id:uid('p'),dept:session.dept,...data});logAction('Projekt erstellt',name,'📊');}
+  save();toast('Gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
+function delProject(id){const p=DB.projects.find(x=>x.id===id);confirmModal('Projekt löschen?',`«${p.name}» löschen?`,'Löschen',()=>{DB.projects=DB.projects.filter(x=>x.id!==id);save();logAction('Projekt gelöscht',p.name,'🗑');toast('Gelöscht','ok');refreshAdmin();goHomeRefresh();});}
+
+/* ----- Admin: KPIs ----- */
+function adminKpis(b,d){
+  adminList(b,DB.kpis.filter(k=>k.dept===d.id),[
+    {h:'Kennzahl',render:k=>`<b>${esc(k.label)}</b>`},
+    {h:'Wert',render:k=>`${esc(k.value)} ${esc(k.unit)}`},
+    {h:'Status',render:k=>badge(k.status)},
+    {h:'Trend',render:k=>esc(k.trend)},
+  ],{title:'Kennzahlen',ic:'📈',add:'editKpi()',edit:'editKpi',del:'delKpi'});
+}
+function editKpi(id){
+  const k=id?DB.kpis.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Bezeichnung <span class="req">*</span></label><input class="input" id="kLabel" value="${k?esc(k.label):''}"></div>
+    <div class="grid-3">
+      <div class="field"><label>Wert</label><input class="input" id="kValue" value="${k?esc(k.value):''}"></div>
+      <div class="field"><label>Einheit</label><input class="input" id="kUnit" value="${k?esc(k.unit):''}" placeholder="% / St / h"></div>
+      <div class="field"><label>Trend</label><input class="input" id="kTrend" value="${k?esc(k.trend):'0.0'}" placeholder="+2.1"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Status</label><select class="select" id="kStatus">
+        <option value="green" ${!k||k.status==='green'?'selected':''}>🟢 OK</option>
+        <option value="yellow" ${k&&k.status==='yellow'?'selected':''}>🟡 Achtung</option>
+        <option value="red" ${k&&k.status==='red'?'selected':''}>🔴 Kritisch</option>
+      </select></div>
+      <div class="field"><label>Zielerreichung % (Balken)</label><input class="input" type="number" id="kCur" value="${k?k.cur:100}"></div>
+    </div>`;
+  openModal(k?'Kennzahl bearbeiten':'Neue Kennzahl',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveKpi('${id||''}')">✓ Speichern</button>`,true);
+}
+function saveKpi(id){
+  const label=$('#kLabel').value.trim();if(!label){toast('Bezeichnung fehlt','err');return;}
+  const data={label,value:$('#kValue').value.trim(),unit:$('#kUnit').value.trim(),trend:$('#kTrend').value.trim()||'0.0',status:$('#kStatus').value,target:100,cur:+$('#kCur').value||100};
+  if(id){Object.assign(DB.kpis.find(x=>x.id===id),data);logAction('Kennzahl aktualisiert',label,'📈');}
+  else{DB.kpis.push({id:uid('k'),dept:session.dept,...data});logAction('Kennzahl erstellt',label,'📈');}
+  save();toast('Gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
+function delKpi(id){const k=DB.kpis.find(x=>x.id===id);confirmModal('Kennzahl löschen?',`«${k.label}» löschen?`,'Löschen',()=>{DB.kpis=DB.kpis.filter(x=>x.id!==id);save();logAction('Kennzahl gelöscht',k.label,'🗑');toast('Gelöscht','ok');refreshAdmin();goHomeRefresh();});}
+
+/* ----- Admin: Events ----- */
+function adminEvents(b,d){
+  adminList(b,DB.events.filter(e=>e.dept===d.id),[
+    {h:'Termin',render:e=>`<b>${esc(e.title)}</b>`},
+    {h:'Datum',render:e=>fmtDate(e.date)+' '+esc(e.time)},
+    {h:'Ort',render:e=>esc(e.location)},
+    {h:'Typ',render:e=>badge('info',e.type)},
+  ],{title:'Termine',ic:'🗓️',add:'editEvent()',edit:'editEvent',del:'delEvent'});
+}
+function editEvent(id){
+  const e=id?DB.events.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="eTitle" value="${e?esc(e.title):''}"></div>
+    <div class="grid-2">
+      <div class="field"><label>Datum</label><input class="input" type="date" id="eDate" value="${e?e.date:today()}"></div>
+      <div class="field"><label>Uhrzeit</label><input class="input" type="time" id="eTime" value="${e?e.time:'09:00'}"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Ort</label><input class="input" id="eLoc" value="${e?esc(e.location):''}"></div>
+      <div class="field"><label>Typ</label><input class="input" id="eType" value="${e?esc(e.type):'Meeting'}"></div>
+    </div>`;
+  openModal(e?'Termin bearbeiten':'Neuer Termin',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveEvent('${id||''}')">✓ Speichern</button>`);
+}
+function saveEvent(id){
+  const title=$('#eTitle').value.trim();if(!title){toast('Titel fehlt','err');return;}
+  const data={title,date:$('#eDate').value,time:$('#eTime').value,location:$('#eLoc').value.trim(),type:$('#eType').value.trim()||'Termin'};
+  if(id){Object.assign(DB.events.find(x=>x.id===id),data);logAction('Termin bearbeitet',title,'🗓️');}
+  else{DB.events.push({id:uid('e'),dept:session.dept,...data});logAction('Termin erfasst',title,'🗓️');}
+  save();toast('Gespeichert','ok');closeModal();refreshAdmin();goHomeRefresh();
+}
+function delEvent(id){const e=DB.events.find(x=>x.id===id);confirmModal('Termin löschen?',`«${e.title}» löschen?`,'Löschen',()=>{DB.events=DB.events.filter(x=>x.id!==id);save();logAction('Termin gelöscht',e.title,'🗑');toast('Gelöscht','ok');refreshAdmin();goHomeRefresh();});}
+
+/* ----- Admin: Info ----- */
+function adminInfo(b,d){
+  const i=DB.info[d.id]||{};
+  b.innerHTML=`<h3 style="font-size:20px;margin-bottom:16px">Abteilungsinformationen bearbeiten</h3>
+    <div class="field"><label>Leitbild</label><textarea class="textarea" id="iMission" style="min-height:110px">${esc(i.mission||'')}</textarea></div>
+    <div class="grid-2">
+      <div class="field"><label>Abteilungsleitung</label><input class="input" id="iLead" value="${esc(i.lead||'')}"></div>
+      <div class="field"><label>Telefon</label><input class="input" id="iPhone" value="${esc(i.phone||'')}"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Mitarbeitende</label><input class="input" type="number" id="iMembers" value="${i.members||0}"></div>
+      <div class="field"><label>Betriebszeiten</label><input class="input" id="iHours" value="${esc(i.hours||'')}"></div>
+    </div>
+    <button class="btn" onclick="saveInfo()">✓ Speichern</button>`;
+}
+function saveInfo(){
+  const d=dept();DB.info[d.id]=DB.info[d.id]||{};
+  Object.assign(DB.info[d.id],{mission:$('#iMission').value.trim(),lead:$('#iLead').value.trim(),phone:$('#iPhone').value.trim(),members:+$('#iMembers').value||0,hours:$('#iHours').value.trim()});
+  save();logAction('Abteilungsinfo aktualisiert',d.name,'ℹ️');toast('Gespeichert','ok');goHomeRefresh();
+}
+
+/* ----- Admin: Tile order ----- */
+function adminTiles(b,d){
+  const order=DB.tileOrder;
+  b.innerHTML=`<h3 style="font-size:20px;margin-bottom:8px">Kachel-Reihenfolge</h3>
+    <p style="color:var(--text-soft);margin-bottom:16px">Reihenfolge der Startseiten-Kacheln festlegen. Pfeile zum Verschieben.</p>
+    <div class="panel"><div id="tileOrderList"></div></div>`;
+  const host=$('#tileOrderList');
+  order.forEach((k,i)=>{
+    const t=TILES[k];
+    host.appendChild(el('div','list-row',`
+      <div class="ic" style="width:44px;height:44px;border-radius:11px;background:${t.bg};display:grid;place-items:center;font-size:22px">${t.icon}</div>
+      <div class="lr-main"><div class="lr-title">${i+1}. ${esc(t.name)}</div></div>
+      <div class="lr-side" style="flex-direction:row;gap:6px">
+        <button class="ico-btn" ${i===0?'disabled style=opacity:.3':''} onclick="moveTile(${i},-1)">▲</button>
+        <button class="ico-btn" ${i===order.length-1?'disabled style=opacity:.3':''} onclick="moveTile(${i},1)">▼</button>
+      </div>`));
+  });
+}
+function moveTile(i,dir){const o=DB.tileOrder;const j=i+dir;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];save();logAction('Kachel-Reihenfolge geändert','','↕');refreshAdmin();goHomeRefresh();}
+
+/* ----- Admin: Log ----- */
+function adminLog(b,d){
+  b.innerHTML=`<h3 style="font-size:20px;margin-bottom:8px">Änderungsprotokoll</h3>
+    <p style="color:var(--text-soft);margin-bottom:16px">Alle Änderungen mit Benutzer, Datum und Uhrzeit.</p>
+    <div class="panel"><div class="panel-body">${DB.log.map(l=>`
+      <div class="log-item"><div class="log-ic">${l.ic}</div>
+        <div style="flex:1"><b>${esc(l.action)}</b>${l.target?` · ${esc(l.target)}`:''}<div style="font-size:13px;color:var(--text-soft)">👤 ${esc(l.user)}</div></div>
+        <div class="log-time">${esc(l.time)}</div></div>`).join('')||'<div style="color:var(--text-soft)">Keine Einträge</div>'}</div></div>`;
+}
+function refreshAdmin(){const host=$('.sheet-body');if(host&&$('#adminBody')){const b=el('div');renderAdmin(b);host.innerHTML='';host.appendChild(b);}}
+function goHomeRefresh(){const m=$('#mainView');if(m&&$('#tiles')){renderHome(m);}}
+
+/* =========================================================================
+   USER & ROLE MANAGEMENT (sysadmin) + DEPT MANAGEMENT
+   ========================================================================= */
+let userTab='users';
+function openUsers(){
+  if(!isSys()){toast('Nur System-Admin','err');return;}
+  userTab='users';
+  const body=el('div');renderUserMgmt(body);
+  openOverlay(sheet('Benutzer & Abteilungen','👥','Systemverwaltung',body));
+}
+function renderUserMgmt(host){
+  host.innerHTML=`<div class="tabs">
+    <button class="tab ${userTab==='users'?'active':''}" onclick="setUserTab('users')">Benutzer & Rollen</button>
+    <button class="tab ${userTab==='depts'?'active':''}" onclick="setUserTab('depts')">Abteilungen</button>
+  </div><div id="umBody"></div>`;
+  const b=$('#umBody',host);
+  if(userTab==='users')umUsers(b);else umDepts(b);
+}
+function setUserTab(k){userTab=k;const host=$('.sheet-body');if(host){const b=el('div');renderUserMgmt(b);host.innerHTML='';host.appendChild(b);}}
+
+function umUsers(b){
+  const roleName={sysadmin:'System-Admin',deptadmin:'Abteilungs-Admin',employee:'Mitarbeiter/in'};
+  const roleBadge={sysadmin:'b-red',deptadmin:'b-info',employee:'b-gray'};
+  const rows=DB.users.map(u=>`<tr>
+    <td><div class="file-cell"><div class="avatar" style="width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700">${esc(u.initials)}</div><div><div class="f-title">${esc(u.name)}</div><div class="f-name">${esc(u.email)}</div></div></div></td>
+    <td><span class="badge ${roleBadge[u.role]}"><span class="b-dot"></span>${roleName[u.role]}</span></td>
+    <td>${u.dept?esc(dept(u.dept).name):'<span style="color:var(--text-soft)">Alle</span>'}</td>
+    <td><div class="row-actions"><button class="ico-btn" onclick="editUser('${u.id}')">✎</button><button class="ico-btn danger" onclick="delUser('${u.id}')">🗑</button></div></td>
+  </tr>`).join('');
+  b.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:20px">Benutzer (${DB.users.length})</h3><button class="btn" onclick="editUser()">＋ Benutzer</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Benutzer</th><th>Rolle</th><th>Abteilung</th><th style="text-align:right">Aktionen</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sec-title">Rollen & Berechtigungen</div>
+    <div class="cols">
+      <div class="panel"><div class="panel-head"><h3>👁 Mitarbeiter/in</h3></div><div class="panel-body" style="color:var(--text-soft)">Nur Leserechte. Sieht ausschliesslich freigegebene Inhalte der eigenen Abteilung. Kann Dokumente lesen und herunterladen.</div></div>
+      <div class="panel"><div class="panel-head"><h3>✎ Abteilungs-Admin</h3></div><div class="panel-body" style="color:var(--text-soft)">Erstellt und verwaltet alle Inhalte der <b>eigenen</b> Abteilung. Kann keine anderen Abteilungen bearbeiten.</div></div>
+      <div class="panel"><div class="panel-head"><h3>⚙️ System-Admin</h3></div><div class="panel-body" style="color:var(--text-soft)">Voller Zugriff: alle Abteilungen, Benutzer- und Rollenverwaltung, Systemeinstellungen.</div></div>
+    </div>`;
+}
+function editUser(id){
+  const u=id?DB.users.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Name <span class="req">*</span></label><input class="input" id="uName" value="${u?esc(u.name):''}"></div>
+    <div class="field"><label>E-Mail</label><input class="input" id="uEmail" value="${u?esc(u.email):''}"></div>
+    <div class="grid-2">
+      <div class="field"><label>Rolle</label><select class="select" id="uRole" onchange="toggleUserDept()">
+        <option value="employee" ${!u||u.role==='employee'?'selected':''}>Mitarbeiter/in</option>
+        <option value="deptadmin" ${u&&u.role==='deptadmin'?'selected':''}>Abteilungs-Admin</option>
+        <option value="sysadmin" ${u&&u.role==='sysadmin'?'selected':''}>System-Admin</option>
+      </select></div>
+      <div class="field" id="uDeptField"><label>Abteilung</label><select class="select" id="uDept">${DB.departments.map(d=>`<option value="${d.id}" ${u&&u.dept===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</select></div>
+    </div>`;
+  openModal(u?'Benutzer bearbeiten':'Neuer Benutzer',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveUser('${id||''}')">✓ Speichern</button>`);
+  setTimeout(toggleUserDept,0);
+}
+function toggleUserDept(){const r=$('#uRole').value;$('#uDeptField').style.visibility=r==='sysadmin'?'hidden':'visible';}
+function saveUser(id){
+  const name=$('#uName').value.trim();if(!name){toast('Name fehlt','err');return;}
+  const role=$('#uRole').value;
+  const initials=name.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+  const data={name,email:$('#uEmail').value.trim(),role,dept:role==='sysadmin'?null:$('#uDept').value,initials};
+  if(id){Object.assign(DB.users.find(x=>x.id===id),data);logAction('Benutzer bearbeitet',name,'👤');}
+  else{DB.users.push({id:uid('u'),...data});logAction('Benutzer angelegt',name,'👤');}
+  save();toast('Gespeichert','ok');closeModal();refreshUserMgmt();buildQuickUsers();
+}
+function delUser(id){const u=DB.users.find(x=>x.id===id);if(session.user&&session.user.id===id){toast('Aktiver Benutzer','err');return;}confirmModal('Benutzer löschen?',`«${u.name}» löschen?`,'Löschen',()=>{DB.users=DB.users.filter(x=>x.id!==id);save();logAction('Benutzer gelöscht',u.name,'🗑');toast('Gelöscht','ok');refreshUserMgmt();buildQuickUsers();});}
+
+function umDepts(b){
+  const rows=DB.departments.map(d=>{
+    const uc=DB.users.filter(u=>u.dept===d.id).length;
+    const dc=DB.documents.filter(x=>x.dept===d.id).length;
+    return `<tr>
+      <td><div class="file-cell"><div class="ic" style="width:44px;height:44px;border-radius:11px;background:${d.color}22;display:grid;place-items:center;font-size:22px">${d.icon}</div><div><div class="f-title">${esc(d.name)}</div><div class="f-name">${esc(d.location)}</div></div></div></td>
+      <td>${uc} Nutzer</td><td>${dc} Dok.</td>
+      <td><span class="badge b-info"><span class="b-dot" style="background:${d.color}"></span>${d.id}</span></td>
+      <td><div class="row-actions"><button class="ico-btn" onclick="editDept('${d.id}')">✎</button><button class="ico-btn danger" onclick="delDept('${d.id}')">🗑</button></div></td>
+    </tr>`;}).join('');
+  b.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:20px">Abteilungen (${DB.departments.length})</h3><button class="btn" onclick="editDept()">＋ Abteilung</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Abteilung</th><th>Nutzer</th><th>Dokumente</th><th>Kürzel</th><th style="text-align:right">Aktionen</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p style="margin-top:14px;color:var(--text-soft);font-size:14px">Neue Abteilungen und Module lassen sich jederzeit ergänzen — die Anwendung ist modular aufgebaut.</p>`;
+}
+function editDept(id){
+  const d=id?DB.departments.find(x=>x.id===id):null;
+  const body=`
+    <div class="field"><label>Name <span class="req">*</span></label><input class="input" id="dName" value="${d?esc(d.name):''}"></div>
+    <div class="grid-2">
+      <div class="field"><label>Icon (Emoji)</label><input class="input" id="dIcon" value="${d?esc(d.icon):'🏢'}"></div>
+      <div class="field"><label>Farbe</label><input class="input" type="color" id="dColor" value="${d?d.color:'#004b87'}" style="height:48px;padding:4px"></div>
+    </div>
+    <div class="field"><label>Standort</label><input class="input" id="dLoc" value="${d?esc(d.location):''}"></div>`;
+  openModal(d?'Abteilung bearbeiten':'Neue Abteilung',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn" onclick="saveDept('${id||''}')">✓ Speichern</button>`);
+}
+function saveDept(id){
+  const name=$('#dName').value.trim();if(!name){toast('Name fehlt','err');return;}
+  const data={name,icon:$('#dIcon').value.trim()||'🏢',color:$('#dColor').value,location:$('#dLoc').value.trim()};
+  if(id){Object.assign(DB.departments.find(x=>x.id===id),data);logAction('Abteilung bearbeitet',name,'🏢');}
+  else{const nid=name.toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,6)+Math.floor(Math.random()*90+10);DB.departments.push({id:nid,...data});DB.info[nid]={lead:'',phone:'',members:0,mission:'',hours:''};DB.shifts[nid]={days:['Mo','Di','Mi','Do','Fr'],rows:[]};logAction('Abteilung erstellt',name,'🏢');}
+  save();toast('Gespeichert','ok');closeModal();refreshUserMgmt();
+}
+function delDept(id){
+  const d=DB.departments.find(x=>x.id===id);
+  if(DB.departments.length<=1){toast('Mindestens eine Abteilung nötig','err');return;}
+  confirmModal('Abteilung löschen?',`«${d.name}» und alle zugeordneten Inhalte werden entfernt.`,'Löschen',()=>{
+    ['documents','projects','kpis','tasks','events','news'].forEach(k=>DB[k]=DB[k].filter(x=>x.dept!==id));
+    DB.departments=DB.departments.filter(x=>x.id!==id);delete DB.info[id];delete DB.shifts[id];
+    if(session.dept===id)session.dept=DB.departments[0].id;
+    save();logAction('Abteilung gelöscht',d.name,'🗑');toast('Gelöscht','ok');refreshUserMgmt();render();
+  });
+}
+function refreshUserMgmt(){const host=$('.sheet-body');if(host&&$('#umBody')){const b=el('div');renderUserMgmt(b);host.innerHTML='';host.appendChild(b);}}
+
+/* =========================================================================
+   AUTH
+   ========================================================================= */
+function buildQuickUsers(){
+  const host=$('#quickUsers');if(!host)return;
+  const roleName={sysadmin:'System-Admin · alle Abteilungen',deptadmin:'Abteilungs-Admin',employee:'Mitarbeiter/in · nur lesen'};
+  host.innerHTML=DB.users.map(u=>`<button class="qu" onclick="loginAs('${u.id}')">
+    <div class="avatar">${esc(u.initials)}</div>
+    <div class="qu-info"><div class="qu-name">${esc(u.name)}</div><div class="qu-role">${roleName[u.role]}${u.dept?' · '+esc(dept(u.dept).name):''}</div></div>
+    <span style="color:var(--blue)">→</span>
+  </button>`).join('');
+}
+function loginAs(id){
+  const u=DB.users.find(x=>x.id===id);if(!u)return;
+  session.user=u;session.dept=u.dept||DB.departments[0].id;
+  $('#loginScreen').classList.add('hidden');
+  logAction('Angemeldet','',' 🔓');
+  render();toast('Willkommen, '+u.name.split(' ')[0]+'!','ok');
+}
+function loginPublic(){session.user=null;session.dept=DB.departments[0].id;$('#loginScreen').classList.add('hidden');render();toast('Öffentlicher Modus','info');}
+function logout(){session.user=null;showLogin();}
+function showLogin(){buildQuickUsers();$('#loginScreen').classList.remove('hidden');}
+
+/* =========================================================================
+   CLOCK
+   ========================================================================= */
+function tickClock(){const c=$('#clock');if(c){const n=new Date();const days=['So','Mo','Di','Mi','Do','Fr','Sa'];c.textContent=`${days[n.getDay()]} 15.07.2026 · ${n.toTimeString().slice(0,8)}`;}}
+setInterval(tickClock,1000);
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+buildQuickUsers();
+render();
+tickClock();
+</script>
+</body>
+</html>
