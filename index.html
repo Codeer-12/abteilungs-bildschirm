@@ -450,72 +450,66 @@ const ALLOWED_TYPES = ['pdf','doc','docx','xls','xlsx','ppt','pptx','png','jpg',
 const MAX_MB = 25;
 
 /* =========================================================================
-   BACKEND-KONFIGURATION (Appwrite)
+   BACKEND-KONFIGURATION (Supabase)
    -------------------------------------------------------------------------
    Leer lassen  →  App läuft rein lokal (localStorage, kein Geräte-Sync).
-   Ausfüllen    →  zentrale Datenbank + echter Dateispeicher + Live-Sync
-                   auf alle Bildschirme (Realtime).
-   Setup-Anleitung: siehe README im Repository.
+   Ausfüllen    →  zentrale Datenbank + Dateispeicher + Live-Sync (Realtime).
+   Setup: SQL aus supabase_setup.sql im Supabase SQL-Editor ausführen,
+   dann Projekt-URL + anon key hier eintragen. Details: README.
    ========================================================================= */
 const BACKEND = {
-  endpoint:  '',   // z.B. 'https://fra.cloud.appwrite.io/v1'
-  projectId: '',   // Appwrite Projekt-ID
-  databaseId:'',   // Datenbank-ID
-  tableId:   '',   // Tabelle mit einer Spalte 'json' (Long text)
-  rowId:     'state', // feste Zeilen-ID für den App-Zustand
-  bucketId:  ''    // Storage-Bucket für Dokument-Dateien
+  url:     '',            // z.B. 'https://xyzcompany.supabase.co'
+  anonKey: '',            // Supabase anon/public API key
+  table:   'app_state',   // Tabelle (siehe supabase_setup.sql)
+  rowId:   'state',       // feste Zeilen-ID für den App-Zustand
+  bucketId:'dokumente'    // Storage-Bucket für Dokument-Dateien
 };
-const SYNC_ON = !!(BACKEND.endpoint && BACKEND.projectId && BACKEND.databaseId && BACKEND.tableId);
-let AW = null;            // {client, tables, storage}
+const SYNC_ON = !!(BACKEND.url && BACKEND.anonKey);
+let AW = null;            // Supabase-Client
 let applyingRemote = false;
 let pushTimer = null;
 
 function initBackend(){
   if(!SYNC_ON) return;
   const s=document.createElement('script');
-  s.src='https://cdn.jsdelivr.net/npm/appwrite@21/dist/iife/sdk.js';
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
   s.onload=()=>{
     try{
-      const client=new Appwrite.Client().setEndpoint(BACKEND.endpoint).setProject(BACKEND.projectId);
-      AW={client,tables:new Appwrite.TablesDB(client),storage:new Appwrite.Storage(client)};
+      AW=window.supabase.createClient(BACKEND.url,BACKEND.anonKey);
       remotePull(true);
-      subscribeRealtime(client);
+      subscribeRealtime();
       setSyncBadge(true);
     }catch(e){console.warn('Backend init fehlgeschlagen',e);setSyncBadge(false);}
   };
   s.onerror=()=>setSyncBadge(false);
   document.head.appendChild(s);
 }
-function subscribeRealtime(client){
-  const chNew=`tablesdb.${BACKEND.databaseId}.tables.${BACKEND.tableId}.rows.${BACKEND.rowId}`;
-  const chOld=`databases.${BACKEND.databaseId}.collections.${BACKEND.tableId}.documents.${BACKEND.rowId}`;
-  const handler=res=>{try{const p=res.payload;if(p&&p.json)applyRemote(JSON.parse(p.json));}catch(e){}};
+function subscribeRealtime(){
   try{
-    if(Appwrite.Realtime&&Appwrite.Channel){
-      new Appwrite.Realtime(client).subscribe(Appwrite.Channel.tablesdb(BACKEND.databaseId).table(BACKEND.tableId).row(BACKEND.rowId),handler);
-    }else if(client.subscribe){
-      client.subscribe([chNew,chOld],handler);
-    }
+    AW.channel('app-state')
+      .on('postgres_changes',{event:'*',schema:'public',table:BACKEND.table,filter:`id=eq.${BACKEND.rowId}`},
+        payload=>{if(payload.new&&payload.new.json)applyRemote(payload.new.json);})
+      .subscribe();
   }catch(e){console.warn('Realtime nicht verfügbar – Fallback Polling',e);}
   // Fallback-Polling zusätzlich (alle 45 s), falls Realtime ausfällt
   setInterval(()=>remotePull(false),45000);
 }
 async function remotePull(first){
   if(!AW)return;
-  try{
-    const row=await AW.tables.getRow({databaseId:BACKEND.databaseId,tableId:BACKEND.tableId,rowId:BACKEND.rowId});
-    if(row&&row.json)applyRemote(JSON.parse(row.json));
-  }catch(e){
-    if(e&&(e.code===404||/not.*found/i.test(e.message||''))&&first){pushRemoteNow();} // erste Nutzung: Zustand hochladen
-  }
+  const {data,error}=await AW.from(BACKEND.table).select('json').eq('id',BACKEND.rowId).maybeSingle();
+  if(error){console.warn('Sync-Pull fehlgeschlagen',error);setSyncBadge(false);return;}
+  if(data&&data.json)applyRemote(data.json);
+  else if(first)pushRemoteNow(); // erste Nutzung: lokalen Zustand hochladen
 }
 function applyRemote(remote){
+  if(typeof remote==='string'){try{remote=JSON.parse(remote);}catch(e){return;}}
   if(!remote||typeof remote!=='object')return;
   if((remote._updatedAt||0)<=(DB._updatedAt||0))return; // lokal ist aktueller
   applyingRemote=true;
   DB=remote;
   localStorage.setItem(LS_KEY,JSON.stringify(DB));
   applyingRemote=false;
+  setSyncBadge(true);
   renderEmergency();
   if(document.getElementById('tiles'))goHomeRefresh();
 }
@@ -526,22 +520,21 @@ function schedulePush(){
 }
 async function pushRemoteNow(){
   if(!AW)return;
-  const json=JSON.stringify(DB);
-  const args={databaseId:BACKEND.databaseId,tableId:BACKEND.tableId,rowId:BACKEND.rowId};
-  try{ await AW.tables.updateRow({...args,data:{json}}); }
-  catch(e){
-    try{ await AW.tables.createRow({...args,data:{json},permissions:[Appwrite.Permission.read(Appwrite.Role.any()),Appwrite.Permission.write(Appwrite.Role.any())]}); }
-    catch(e2){ console.warn('Sync-Push fehlgeschlagen',e2); setSyncBadge(false); }
-  }
+  const {error}=await AW.from(BACKEND.table)
+    .upsert({id:BACKEND.rowId,json:DB,updated_at:new Date().toISOString()});
+  if(error){console.warn('Sync-Push fehlgeschlagen',error);setSyncBadge(false);}
+  else setSyncBadge(true);
 }
+function safeFileName(name){return name.normalize('NFKD').replace(/[^\w.\-]+/g,'_');}
 async function uploadFileToBucket(f){
   if(!AW||!BACKEND.bucketId)return null;
-  const res=await AW.storage.createFile({bucketId:BACKEND.bucketId,fileId:Appwrite.ID.unique(),file:f,
-    permissions:[Appwrite.Permission.read(Appwrite.Role.any()),Appwrite.Permission.write(Appwrite.Role.any())]});
-  return res.$id;
+  const path=Date.now()+'-'+safeFileName(f.name);
+  const {error}=await AW.storage.from(BACKEND.bucketId).upload(path,f,{upsert:false});
+  if(error)throw error;
+  return path;
 }
-function fileViewUrl(id){return `${BACKEND.endpoint}/storage/buckets/${BACKEND.bucketId}/files/${id}/view?project=${BACKEND.projectId}`;}
-function fileDownloadUrl(id){return `${BACKEND.endpoint}/storage/buckets/${BACKEND.bucketId}/files/${id}/download?project=${BACKEND.projectId}`;}
+function fileViewUrl(id){return `${BACKEND.url}/storage/v1/object/public/${BACKEND.bucketId}/${id}`;}
+function fileDownloadUrl(id){return `${BACKEND.url}/storage/v1/object/public/${BACKEND.bucketId}/${id}?download`;}
 function setSyncBadge(ok){
   const c=document.getElementById('clock');
   if(c)c.title=ok?'Zentrale Datenbank verbunden':'Sync nicht verbunden';
@@ -1222,7 +1215,7 @@ function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;
   if(x.fileId&&SYNC_ON&&BACKEND.bucketId){window.open(fileDownloadUrl(x.fileId),'_blank');}
   toast('Download gestartet: '+x.fileName,'ok');logAction('Dokument heruntergeladen',x.title,'⬇');}
 function deleteDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;confirmModal('Dokument löschen?',`«${x.title}» wird unwiderruflich gelöscht.`,'Löschen',()=>{
-  if(x.fileId&&AW&&BACKEND.bucketId){AW.storage.deleteFile({bucketId:BACKEND.bucketId,fileId:x.fileId}).catch(()=>{});}
+  if(x.fileId&&AW&&BACKEND.bucketId){AW.storage.from(BACKEND.bucketId).remove([x.fileId]).catch(()=>{});}
   DB.documents=DB.documents.filter(d=>d.id!==id);save();logAction('Dokument gelöscht',x.title,'🗑');toast('Dokument gelöscht','ok');refreshDocList(dept());goHomeRefresh();});}
 
 /* =========================================================================

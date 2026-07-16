@@ -20,50 +20,47 @@ Admins: 🚨-Button in der Topbar → Titel + Meldung → erscheint sofort bilds
 Mit aktivem Backend-Sync auf **allen** Geräten in Echtzeit; ohne Backend nur im selben Browser.
 Entwarnung über denselben Button.
 
-## Backend einrichten (Appwrite) — echter Geräte-Sync
+## Backend einrichten (Supabase) — echter Geräte-Sync
 
 Ohne Backend läuft die App rein lokal (localStorage, kein Sync zwischen Geräten).
-Mit Appwrite (gratis Tier reicht): zentrale Datenbank, echter Dateispeicher,
-Live-Sync auf alle Bildschirme, echte PDF-/Bild-Vorschau.
+Mit Supabase (gratis Tier reicht): zentrale Datenbank, echter Dateispeicher,
+Live-Sync auf alle Bildschirme (Realtime), echte PDF-/Bild-Vorschau.
 
 ### Schritt für Schritt
 
-1. **Konto:** https://cloud.appwrite.io → registrieren (gratis)
-2. **Projekt** anlegen → Region wählen (z.B. Frankfurt) → **Projekt-ID** notieren
-3. **Plattform hinzufügen:** Project Settings → Platforms → *Web App* →
-   Hostname: `codeer-12.github.io` (und `localhost` fürs lokale Testen)
-4. **Datenbank:** Databases → Create database (Name egal) → **Database-ID** notieren
-5. **Tabelle:** Create table → Name `state` → **Table-ID** notieren
-   - Spalte anlegen: Key `json`, Typ **Long text** (bzw. String mit großer Länge), nicht required
-   - **Settings → Permissions:** Role `Any` → Read ✓, Create ✓, Update ✓
-6. **Storage:** Buckets → Create bucket → **Bucket-ID** notieren
-   - Permissions: Role `Any` → Read ✓, Create ✓, Update ✓, Delete ✓
-   - Erlaubte Dateitypen: pdf, doc, docx, xls, xlsx, ppt, pptx, png, jpg, jpeg, gif, svg
-   - Max. Dateigröße: 25 MB
-7. **IDs eintragen** in `index.html`, Block `const BACKEND = {...}` (ganz oben im Script):
+1. **Konto:** https://supabase.com → registrieren (gratis)
+2. **Projekt** anlegen (Region z.B. Frankfurt) → warten bis bereit
+3. **SQL ausführen:** Dashboard → **SQL Editor** → Inhalt von
+   [`supabase_setup.sql`](supabase_setup.sql) einfügen → **Run**
+   (legt Tabelle `app_state`, Realtime und Storage-Bucket `dokumente` an)
+4. **Schlüssel holen:** Settings → API →
+   - **Project URL** (z.B. `https://abcdefgh.supabase.co`)
+   - **anon public key**
+5. **Eintragen** in `index.html`, Block `const BACKEND = {...}` (ganz oben im Script):
 
 ```js
 const BACKEND = {
-  endpoint:  'https://fra.cloud.appwrite.io/v1', // deine Region
-  projectId: '…',
-  databaseId:'…',
-  tableId:   '…',
-  rowId:     'state',
-  bucketId:  '…'
+  url:     'https://<projekt-ref>.supabase.co',
+  anonKey: '<anon public key>',
+  table:   'app_state',
+  rowId:   'state',
+  bucketId:'dokumente'
 };
 ```
 
-8. Committen & pushen → GitHub Pages baut neu → fertig.
+6. Committen & pushen → GitHub Pages baut neu → fertig.
    Grüner Punkt in der Topbar = Sync verbunden.
 
 ### ⚠️ Sicherheitshinweis (Prototyp-Stufe)
 
-Die Permissions oben (`Any` darf schreiben) sind **bewusst offen** für den schnellen Start —
-jeder mit der URL könnte Daten ändern. Für den Produktivbetrieb härten:
+Die Policies im Setup-SQL sind **bewusst offen** (anon darf schreiben) —
+jeder mit der URL könnte Daten ändern. Der anon key im Frontend ist bei Supabase
+normal und vorgesehen; die Absicherung passiert über Row Level Security.
+Für den Produktivbetrieb härten (Vorlage steht auskommentiert im SQL):
 
-- Appwrite-Auth (E-Mail/Passwort oder SSO) aktivieren
-- Schreibrechte auf Role `users` bzw. Teams beschränken
-- Rollenprüfung serverseitig (Appwrite Functions) statt nur im Client
+- Supabase Auth (E-Mail/Passwort oder SSO) aktivieren
+- Schreib-Policies auf `authenticated` umstellen
+- Rollenprüfung serverseitig statt nur im Client
 
 ## Rollen (Demo-Login)
 
@@ -76,5 +73,5 @@ jeder mit der URL könnte Daten ändern. Für den Produktivbetrieb härten:
 ## Stack
 
 - Ein HTML-File, kein Framework, kein Build
-- Persistenz: localStorage, optional Appwrite (TablesDB + Storage + Realtime)
+- Persistenz: localStorage, optional Supabase (Postgres + Storage + Realtime)
 - Hosting: GitHub Pages
