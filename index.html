@@ -335,6 +335,16 @@ tbody tr:last-child td{border-bottom:none}
 .file-item .fi-name{flex:1;font-weight:600;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .file-item .fi-size{font-size:12.5px;color:var(--text-soft)}
 
+/* Emergency override */
+.emg-overlay{position:fixed;inset:0;z-index:500;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;animation:emgpulse 1.8s ease-in-out infinite}
+@keyframes emgpulse{0%,100%{background:rgba(184,22,22,.98)}50%{background:rgba(130,8,8,.98)}}
+.emg-overlay .e-ic{font-size:clamp(80px,14vw,150px);margin-bottom:10px;animation:emgshake 1.8s infinite}
+@keyframes emgshake{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.emg-overlay h1{font-size:clamp(34px,6vw,74px);font-weight:900;letter-spacing:-1px;margin-bottom:14px;text-transform:uppercase}
+.emg-overlay p{font-size:clamp(19px,2.8vw,32px);max-width:1100px;line-height:1.45;font-weight:600}
+.emg-overlay .e-meta{margin-top:26px;font-size:16px;opacity:.85}
+.kiosk-badge{display:inline-flex;align-items:center;gap:8px;background:var(--anthracite-2);border:1px solid #4a4f57;border-radius:30px;padding:9px 16px;font-weight:600;font-size:14.5px;color:#c7ced6}
+
 /* Login */
 .login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--anthracite),var(--blue-dark));display:grid;place-items:center;z-index:100;padding:20px}
 .login-card{background:#fff;border-radius:22px;width:100%;max-width:430px;padding:40px 36px;box-shadow:var(--shadow-lg)}
@@ -439,6 +449,106 @@ const LS_KEY = 'abt_bildschirm_v1';
 const ALLOWED_TYPES = ['pdf','doc','docx','xls','xlsx','ppt','pptx','png','jpg','jpeg','gif','svg'];
 const MAX_MB = 25;
 
+/* =========================================================================
+   BACKEND-KONFIGURATION (Appwrite)
+   -------------------------------------------------------------------------
+   Leer lassen  →  App läuft rein lokal (localStorage, kein Geräte-Sync).
+   Ausfüllen    →  zentrale Datenbank + echter Dateispeicher + Live-Sync
+                   auf alle Bildschirme (Realtime).
+   Setup-Anleitung: siehe README im Repository.
+   ========================================================================= */
+const BACKEND = {
+  endpoint:  '',   // z.B. 'https://fra.cloud.appwrite.io/v1'
+  projectId: '',   // Appwrite Projekt-ID
+  databaseId:'',   // Datenbank-ID
+  tableId:   '',   // Tabelle mit einer Spalte 'json' (Long text)
+  rowId:     'state', // feste Zeilen-ID für den App-Zustand
+  bucketId:  ''    // Storage-Bucket für Dokument-Dateien
+};
+const SYNC_ON = !!(BACKEND.endpoint && BACKEND.projectId && BACKEND.databaseId && BACKEND.tableId);
+let AW = null;            // {client, tables, storage}
+let applyingRemote = false;
+let pushTimer = null;
+
+function initBackend(){
+  if(!SYNC_ON) return;
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/appwrite@21/dist/iife/sdk.js';
+  s.onload=()=>{
+    try{
+      const client=new Appwrite.Client().setEndpoint(BACKEND.endpoint).setProject(BACKEND.projectId);
+      AW={client,tables:new Appwrite.TablesDB(client),storage:new Appwrite.Storage(client)};
+      remotePull(true);
+      subscribeRealtime(client);
+      setSyncBadge(true);
+    }catch(e){console.warn('Backend init fehlgeschlagen',e);setSyncBadge(false);}
+  };
+  s.onerror=()=>setSyncBadge(false);
+  document.head.appendChild(s);
+}
+function subscribeRealtime(client){
+  const chNew=`tablesdb.${BACKEND.databaseId}.tables.${BACKEND.tableId}.rows.${BACKEND.rowId}`;
+  const chOld=`databases.${BACKEND.databaseId}.collections.${BACKEND.tableId}.documents.${BACKEND.rowId}`;
+  const handler=res=>{try{const p=res.payload;if(p&&p.json)applyRemote(JSON.parse(p.json));}catch(e){}};
+  try{
+    if(Appwrite.Realtime&&Appwrite.Channel){
+      new Appwrite.Realtime(client).subscribe(Appwrite.Channel.tablesdb(BACKEND.databaseId).table(BACKEND.tableId).row(BACKEND.rowId),handler);
+    }else if(client.subscribe){
+      client.subscribe([chNew,chOld],handler);
+    }
+  }catch(e){console.warn('Realtime nicht verfügbar – Fallback Polling',e);}
+  // Fallback-Polling zusätzlich (alle 45 s), falls Realtime ausfällt
+  setInterval(()=>remotePull(false),45000);
+}
+async function remotePull(first){
+  if(!AW)return;
+  try{
+    const row=await AW.tables.getRow({databaseId:BACKEND.databaseId,tableId:BACKEND.tableId,rowId:BACKEND.rowId});
+    if(row&&row.json)applyRemote(JSON.parse(row.json));
+  }catch(e){
+    if(e&&(e.code===404||/not.*found/i.test(e.message||''))&&first){pushRemoteNow();} // erste Nutzung: Zustand hochladen
+  }
+}
+function applyRemote(remote){
+  if(!remote||typeof remote!=='object')return;
+  if((remote._updatedAt||0)<=(DB._updatedAt||0))return; // lokal ist aktueller
+  applyingRemote=true;
+  DB=remote;
+  localStorage.setItem(LS_KEY,JSON.stringify(DB));
+  applyingRemote=false;
+  renderEmergency();
+  if(document.getElementById('tiles'))goHomeRefresh();
+}
+function schedulePush(){
+  if(!SYNC_ON||applyingRemote)return;
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(pushRemoteNow,800);
+}
+async function pushRemoteNow(){
+  if(!AW)return;
+  const json=JSON.stringify(DB);
+  const args={databaseId:BACKEND.databaseId,tableId:BACKEND.tableId,rowId:BACKEND.rowId};
+  try{ await AW.tables.updateRow({...args,data:{json}}); }
+  catch(e){
+    try{ await AW.tables.createRow({...args,data:{json},permissions:[Appwrite.Permission.read(Appwrite.Role.any()),Appwrite.Permission.write(Appwrite.Role.any())]}); }
+    catch(e2){ console.warn('Sync-Push fehlgeschlagen',e2); setSyncBadge(false); }
+  }
+}
+async function uploadFileToBucket(f){
+  if(!AW||!BACKEND.bucketId)return null;
+  const res=await AW.storage.createFile({bucketId:BACKEND.bucketId,fileId:Appwrite.ID.unique(),file:f,
+    permissions:[Appwrite.Permission.read(Appwrite.Role.any()),Appwrite.Permission.write(Appwrite.Role.any())]});
+  return res.$id;
+}
+function fileViewUrl(id){return `${BACKEND.endpoint}/storage/buckets/${BACKEND.bucketId}/files/${id}/view?project=${BACKEND.projectId}`;}
+function fileDownloadUrl(id){return `${BACKEND.endpoint}/storage/buckets/${BACKEND.bucketId}/files/${id}/download?project=${BACKEND.projectId}`;}
+function setSyncBadge(ok){
+  const c=document.getElementById('clock');
+  if(c)c.title=ok?'Zentrale Datenbank verbunden':'Sync nicht verbunden';
+  const b=document.getElementById('syncDot');
+  if(b)b.style.background=ok?'var(--green)':'var(--yellow)';
+}
+
 /* ---------- Seed / Default Data ---------- */
 function seed(){
   const now = '2026-07-15';
@@ -534,6 +644,8 @@ function seed(){
 
 /* ---------- State ---------- */
 let DB = load();
+/* Kiosk-Modus: ?kiosk=<abteilungs-id>  →  kein Login, nur Anzeige, Abteilung fix */
+const KIOSK = new URLSearchParams(location.search).get('kiosk') || null;
 let session = { user:null, dept:'prod' }; // user null = öffentlicher Modus
 let ui = { docView:'table', docSearch:'', docFilters:{cat:'',type:'',status:'',imp:false}, docSort:'date' };
 
@@ -541,7 +653,7 @@ function load(){
   try{ const s=localStorage.getItem(LS_KEY); if(s) return JSON.parse(s); }catch(e){}
   const d=seed(); localStorage.setItem(LS_KEY,JSON.stringify(d)); return d;
 }
-function save(){ localStorage.setItem(LS_KEY,JSON.stringify(DB)); }
+function save(){ if(!applyingRemote)DB._updatedAt=Date.now(); localStorage.setItem(LS_KEY,JSON.stringify(DB)); schedulePush(); }
 function resetDB(){ localStorage.removeItem(LS_KEY); DB=load(); toast('Daten zurückgesetzt','info'); render(); }
 
 /* ---------- Helpers ---------- */
@@ -616,16 +728,19 @@ function topbar(){
       </div>
     </div>
     <div class="clock" id="clock"></div>
+    ${SYNC_ON?'<span id="syncDot" title="Zentrale Datenbank" style="width:10px;height:10px;border-radius:50%;background:var(--yellow);flex-shrink:0"></span>':''}
     <div class="spacer"></div>
+    ${KIOSK?`<div class="kiosk-badge"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:${d.color}"></span> ${d.icon} ${esc(d.name)} · 🖥️ Kiosk</div>`:`
     <div class="dept-switch" onclick="openDeptSwitch()">
       <span class="dot" style="background:${d.color}"></span>
       <span style="font-size:20px">${d.icon}</span>
       <span class="name">${esc(d.name)}</span>
       <span class="chev">▼</span>
     </div>
+    ${isAdmin()?`<button class="btn-icon-top" title="Notfall-Meldung" onclick="openEmergency()" style="${DB.emergency&&DB.emergency.active?'background:var(--red)':''}">🚨</button>`:''}
     ${isAdmin()?`<button class="btn-icon-top" title="Administration" onclick="openAdmin()">⚙️</button>`:''}
     ${isSys()?`<button class="btn-icon-top" title="Benutzerverwaltung" onclick="openUsers()">👥</button>`:''}
-    ${userChip()}
+    ${userChip()}`}
   `;
   return bar;
 }
@@ -713,6 +828,9 @@ function miniThumb(x){
   const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
   const bg=fc==='fi-pdf'?'#d63b3b':fc==='fi-doc'?'#2b579a':fc==='fi-xls'?'#217346':fc==='fi-ppt'?'#d24726':fc==='fi-img'?'#7b4fc0':'#6b7480';
   const ic=isImg?'🖼️':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄';
+  if(isImg&&x.fileId&&SYNC_ON&&BACKEND.bucketId){
+    return `<div class="mini-thumb" title="${esc(x.title)}" style="background:url('${fileViewUrl(x.fileId)}') center/cover" onclick="event.stopPropagation();openDoc('${x.id}')"></div>`;
+  }
   return `<div class="mini-thumb" title="${esc(x.title)}" style="background:linear-gradient(135deg,${bg},${bg}cc)" onclick="event.stopPropagation();openDoc('${x.id}')">${ic}</div>`;
 }
 function openGallery(id){
@@ -1048,7 +1166,11 @@ function openDoc(id){
   const isPdf=x.fileType==='pdf';
   const[fc,ft]=fileMeta(x.fileType);
   let stage='';
-  if(isImg){
+  if(x.fileId&&SYNC_ON&&BACKEND.bucketId&&isImg){
+    stage=`<div class="preview-stage"><img class="preview-img" src="${fileViewUrl(x.fileId)}" alt="${esc(x.title)}"></div>`;
+  }else if(x.fileId&&SYNC_ON&&BACKEND.bucketId&&isPdf){
+    stage=`<div class="preview-stage" style="padding:0"><iframe src="${fileViewUrl(x.fileId)}" style="width:100%;height:72vh;border:none;border-radius:14px;background:#fff" title="${esc(x.title)}"></iframe></div>`;
+  }else if(isImg){
     stage=`<div class="preview-stage"><svg class="preview-img" viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="400" fill="#e8eef4"/><rect x="40" y="40" width="560" height="240" rx="8" fill="#cdd8e2"/><circle cx="150" cy="150" r="45" fill="#a7b8c8"/><path d="M40 280 L200 160 L340 250 L460 130 L600 240 L600 280 Z" fill="#8fa6ba"/><text x="320" y="345" font-family="sans-serif" font-size="22" fill="#5b6570" text-anchor="middle">${esc(x.fileName)}</text></svg></div>`;
   }else if(isPdf){
     stage=`<div class="preview-stage"><div class="preview-doc">
@@ -1096,8 +1218,12 @@ function openDoc(id){
   openOverlay(sheet(x.title,fc==='fi-pdf'?'📄':'📁','Dokumentvorschau · '+dept(x.dept).name,body));
 }
 function toggleImportant(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;x.important=!x.important;save();logAction(x.important?'Als wichtig markiert':'Wichtig-Markierung entfernt',x.title,'★');toast(x.important?'Als wichtig markiert':'Markierung entfernt','ok');openDoc(id);}
-function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;toast('Download gestartet: '+x.fileName,'ok');logAction('Dokument heruntergeladen',x.title,'⬇');}
-function deleteDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;confirmModal('Dokument löschen?',`«${x.title}» wird unwiderruflich gelöscht.`,'Löschen',()=>{DB.documents=DB.documents.filter(d=>d.id!==id);save();logAction('Dokument gelöscht',x.title,'🗑');toast('Dokument gelöscht','ok');refreshDocList(dept());goHomeRefresh();});}
+function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;
+  if(x.fileId&&SYNC_ON&&BACKEND.bucketId){window.open(fileDownloadUrl(x.fileId),'_blank');}
+  toast('Download gestartet: '+x.fileName,'ok');logAction('Dokument heruntergeladen',x.title,'⬇');}
+function deleteDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;confirmModal('Dokument löschen?',`«${x.title}» wird unwiderruflich gelöscht.`,'Löschen',()=>{
+  if(x.fileId&&AW&&BACKEND.bucketId){AW.storage.deleteFile({bucketId:BACKEND.bucketId,fileId:x.fileId}).catch(()=>{});}
+  DB.documents=DB.documents.filter(d=>d.id!==id);save();logAction('Dokument gelöscht',x.title,'🗑');toast('Dokument gelöscht','ok');refreshDocList(dept());goHomeRefresh();});}
 
 /* =========================================================================
    UPLOAD / EDIT FORM
@@ -1171,7 +1297,7 @@ function showPicked(files,host){
       ${ok?'<span class="badge b-green"><span class="b-dot"></span>OK</span>':'<span class="badge b-red"><span class="b-dot"></span>Ungültig</span>'}`));
   });
 }
-function saveUpload(editId){
+async function saveUpload(editId){
   const title=$('#upTitle').value.trim();
   if(!title){toast('Titel erforderlich','err');return;}
   let cat=$('#upCat').value;
@@ -1182,7 +1308,12 @@ function saveUpload(editId){
     const x=DB.documents.find(d=>d.id===editId);
     const replaced=$('#replaceInput')&&$('#replaceInput').files.length;
     Object.assign(x,common);
-    if(replaced){const f=$('#replaceInput').files[0];const ext=f.name.split('.').pop().toLowerCase();if(!ALLOWED_TYPES.includes(ext)){toast('Dateityp nicht erlaubt','err');return;}x.fileName=f.name;x.fileType=ext;x.size=f.size;x.version++;x.uploaded=today();}
+    if(replaced){
+      const f=$('#replaceInput').files[0];const ext=f.name.split('.').pop().toLowerCase();
+      if(!ALLOWED_TYPES.includes(ext)){toast('Dateityp nicht erlaubt','err');return;}
+      if(SYNC_ON&&BACKEND.bucketId){toast('Datei wird hochgeladen…','info');try{x.fileId=await uploadFileToBucket(f);}catch(e){toast('Upload fehlgeschlagen: '+(e.message||e),'err');return;}}
+      x.fileName=f.name;x.fileType=ext;x.size=f.size;x.version++;x.uploaded=today();
+    }
     save();logAction(replaced?`Dokument ersetzt → v${x.version}`:'Dokument bearbeitet',x.title,replaced?'♻️':'✎');
     toast('Dokument gespeichert','ok');
   }else{
@@ -1190,10 +1321,14 @@ function saveUpload(editId){
     if(!picked.length){toast('Bitte Datei auswählen','err');return;}
     const invalid=picked.find(f=>{const e=f.name.split('.').pop().toLowerCase();return !ALLOWED_TYPES.includes(e)||f.size>MAX_MB*1024*1024;});
     if(invalid){toast('Ungültiger Dateityp oder zu gross: '+invalid.name,'err');return;}
-    picked.forEach((f,idx)=>{
+    if(SYNC_ON&&BACKEND.bucketId)toast('Dateien werden hochgeladen…','info');
+    for(let idx=0;idx<picked.length;idx++){
+      const f=picked[idx];
       const ext=f.name.split('.').pop().toLowerCase();
-      DB.documents.unshift({id:uid('d'),dept:session.dept,fileName:f.name,fileType:ext,size:f.size,version:1,uploaded:today(),...common,title:picked.length>1?`${title} (${idx+1})`:title});
-    });
+      let fileId=null;
+      if(SYNC_ON&&BACKEND.bucketId){try{fileId=await uploadFileToBucket(f);}catch(e){toast('Upload fehlgeschlagen: '+f.name,'err');continue;}}
+      DB.documents.unshift({id:uid('d'),dept:session.dept,fileName:f.name,fileType:ext,size:f.size,version:1,uploaded:today(),fileId,...common,title:picked.length>1?`${title} (${idx+1})`:title});
+    }
     save();logAction('Dokument hochgeladen',title+(picked.length>1?` (${picked.length} Dateien)`:''),'📤');
     toast(picked.length>1?picked.length+' Dokumente hochgeladen':'Dokument hochgeladen','ok');
     window._picked=[];
@@ -1239,6 +1374,53 @@ function openDeptSwitch(){
   openModal('Abteilung wechseln',body,null);
 }
 function switchDept(id){if(!allowedDepts().some(d=>d.id===id)){toast('Keine Berechtigung','err');return;}session.dept=id;closeModal();closeOverlay();render();toast('Abteilung: '+dept().name,'info');}
+
+/* =========================================================================
+   EMERGENCY OVERRIDE  (Notfall-Broadcast auf alle Bildschirme)
+   ========================================================================= */
+function ensureEmergency(){if(!DB.emergency)DB.emergency={active:false};}
+function renderEmergency(){
+  ensureEmergency();
+  const ex=document.getElementById('emgOverlay');
+  if(!DB.emergency.active){if(ex)ex.remove();return;}
+  const e=DB.emergency;
+  const html=`
+    <div class="e-ic">🚨</div>
+    <h1>${esc(e.title||'Notfall')}</h1>
+    <p>${esc(e.message||'')}</p>
+    <div class="e-meta">Ausgelöst von ${esc(e.by||'—')} · ${esc(e.since||'')}</div>
+    ${isAdmin()?`<button class="btn lg" style="margin-top:34px;background:#fff;color:var(--red)" onclick="deactivateEmergency()">✓ Entwarnung – Meldung beenden</button>`:''}`;
+  if(ex){ex.innerHTML=html;return;}
+  const o=el('div','emg-overlay');o.id='emgOverlay';o.innerHTML=html;
+  document.body.appendChild(o);
+}
+function openEmergency(){
+  if(!isAdmin()){toast('Keine Berechtigung','err');return;}
+  ensureEmergency();
+  if(DB.emergency.active){
+    confirmModal('Notfall beenden?','Die aktive Notfall-Meldung wird auf allen Bildschirmen entfernt.','Entwarnung',deactivateEmergency);
+    return;
+  }
+  const body=`
+    <p style="margin-bottom:16px;color:var(--text-soft)">Die Meldung erscheint <b>sofort bildschirmfüllend auf allen Geräten</b> (mit aktivem Sync) und bleibt bis zur Entwarnung.</p>
+    <div class="field"><label>Titel <span class="req">*</span></label><input class="input" id="emgTitle" placeholder="z.B. Evakuierung Halle 3"></div>
+    <div class="field"><label>Meldung</label><textarea class="textarea" id="emgMsg" placeholder="Anweisungen für die Mitarbeitenden…"></textarea></div>`;
+  openModal('🚨 Notfall-Meldung auslösen',body,
+    `<button class="btn subtle" onclick="closeModal()">Abbrechen</button><button class="btn danger" onclick="activateEmergency()">🚨 Jetzt auslösen</button>`);
+}
+function activateEmergency(){
+  const title=$('#emgTitle').value.trim();if(!title){toast('Titel fehlt','err');return;}
+  DB.emergency={active:true,title,message:$('#emgMsg').value.trim(),by:user().name,since:nowStamp()};
+  save();logAction('NOTFALL ausgelöst',title,'🚨');closeModal();closeOverlay();renderEmergency();
+}
+function deactivateEmergency(){
+  DB.emergency={active:false};save();logAction('Notfall beendet — Entwarnung','','✓');
+  renderEmergency();render();toast('Entwarnung gesendet','ok');
+}
+/* Cross-Tab/Fenster-Sync im selben Browser (Gerätesync via Backend) */
+window.addEventListener('storage',ev=>{
+  if(ev.key===LS_KEY){DB=load();renderEmergency();goHomeRefresh();}
+});
 
 /* =========================================================================
    ADMIN AREA
@@ -1721,7 +1903,14 @@ setInterval(tickClock,1000);
    INIT
    ========================================================================= */
 buildQuickUsers();
+initBackend();
+if(KIOSK&&DB.departments.some(d=>d.id===KIOSK)){
+  session.user=null;session.dept=KIOSK;
+  $('#loginScreen').classList.add('hidden');
+  setInterval(()=>{if(SYNC_ON)remotePull(false);else{DB=load();renderEmergency();goHomeRefresh();}},30000); // Kiosk: periodisch aktualisieren
+}
 render();
+renderEmergency();
 tickClock();
 </script>
 </body>
