@@ -444,6 +444,85 @@ tbody tr:last-child td{border-bottom:none}
   .row-actions{flex-wrap:wrap}
 }
 .role-hide{display:none !important}
+
+/* ======================= Dashboard-Baukasten (frei) ======================= */
+.tiles.canvas{display:block;position:relative;gap:0}
+.tiles.canvas .tile{position:absolute;top:0;left:0;margin:0;min-height:0;
+  transition:left .16s ease,top .16s ease,width .16s ease,height .16s ease,box-shadow .16s}
+.tiles.canvas .tile:hover{transform:none}
+.tiles.canvas.editing .tile{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+  outline:2px dashed transparent;transition:box-shadow .16s}
+.tiles.canvas.editing .tile:hover{outline-color:var(--blue)}
+.tiles.canvas.editing .tile.dragging{cursor:grabbing;z-index:60;box-shadow:var(--shadow-lg);
+  opacity:.96;transition:none}
+.tiles.canvas.editing .tile.resizing{z-index:60;box-shadow:var(--shadow-lg);transition:none}
+.grid-cell-ph{position:absolute;border:2px dashed var(--blue);background:var(--blue-light);
+  border-radius:var(--radius);z-index:5;transition:left .12s,top .12s,width .12s,height .12s;pointer-events:none;opacity:.85}
+/* Resize-Griffe + Kachel-Werkzeuge (nur Bearbeiten) */
+.tile .edit-tools{position:absolute;top:10px;right:10px;display:none;gap:6px;z-index:8}
+.tiles.canvas.editing .tile .edit-tools{display:flex}
+.tile .edit-tools button{width:32px;height:32px;border:none;border-radius:9px;background:rgba(20,24,28,.72);
+  color:#fff;font-size:14px;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(4px)}
+.tile .edit-tools button:hover{background:var(--blue)}
+.tile .edit-tools button.rm:hover{background:var(--red)}
+.tile .rz{position:absolute;width:26px;height:26px;right:-2px;bottom:-2px;cursor:nwse-resize;z-index:8;display:none;
+  touch-action:none}
+.tile .rz::after{content:"";position:absolute;right:6px;bottom:6px;width:12px;height:12px;
+  border-right:3px solid var(--blue);border-bottom:3px solid var(--blue);border-radius:0 0 4px 0}
+.tiles.canvas.editing .tile .rz{display:block}
+.tiles.canvas.editing .tile .ic{pointer-events:none}
+/* Editor-Werkzeugleiste */
+.editbar{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:120;
+  background:var(--anthracite);color:#fff;border-radius:16px;box-shadow:var(--shadow-lg);
+  display:flex;align-items:center;gap:8px;padding:10px 12px;max-width:calc(100vw - 28px);flex-wrap:wrap}
+.editbar .eb-title{font-weight:700;font-size:14px;padding:0 8px;white-space:nowrap}
+.editbar button{border:none;border-radius:10px;padding:9px 13px;font-weight:600;font-size:14px;cursor:pointer;
+  background:#3a4048;color:#fff;display:inline-flex;align-items:center;gap:7px}
+.editbar button:hover{background:#464d56}
+.editbar button.primary{background:var(--blue)}.editbar button.primary:hover{filter:brightness(1.08)}
+.editbar .sep{width:1px;height:26px;background:#4a515a;margin:0 2px}
+/* Kachel-Palette (Verfügbar) */
+.palette{position:fixed;right:18px;top:88px;bottom:96px;width:230px;z-index:115;background:var(--card);
+  border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:14px;overflow-y:auto}
+.palette h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-soft);margin:4px 0 10px}
+.palette .pal-item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);
+  border-radius:11px;margin-bottom:8px;cursor:grab;background:var(--bg);touch-action:none;font-weight:600;font-size:14px}
+.palette .pal-item:hover{border-color:var(--blue);background:var(--blue-light)}
+.palette .pal-item .pic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.palette .pal-empty{color:var(--text-soft);font-size:13px;padding:8px 2px}
+@media(max-width:820px){.palette{position:static;width:auto;inset:auto;margin:0 0 16px;max-height:none}}
+/* Hintergrundbild hinter den Kacheln */
+.home-wrap{position:relative}
+.home-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;border-radius:18px;
+  pointer-events:none}
+.home-bg::after{content:"";position:absolute;inset:0;border-radius:18px;
+  background:linear-gradient(180deg,rgba(240,242,245,.55),rgba(240,242,245,.72))}
+:root[data-theme] .home-bg::after,body .home-bg.dim::after{background:linear-gradient(180deg,rgba(240,242,245,.4),rgba(240,242,245,.62))}
+.home-wrap.has-bg{padding:16px}
+.home-wrap.has-bg .page-head,.home-wrap.has-bg .tiles,.home-wrap.has-bg .ticker{position:relative;z-index:1}
+.home-wrap.has-bg .tile{background:rgba(255,255,255,.9);backdrop-filter:blur(3px)}
+.home-wrap.has-bg .page-head h1{text-shadow:0 1px 10px rgba(255,255,255,.7)}
+/* Logo im Header */
+.brand .logo img,.login-card .logo img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.brand .logo{overflow:hidden}.login-card .logo{overflow:hidden}
+/* Fokussierter Dokument-Viewer (Druckansicht) */
+.docview{position:relative}
+.docview .dv-stage{background:#f1f3f5;border-radius:14px;min-height:60vh;display:grid;place-items:center;
+  padding:18px;overflow:auto}
+.docview .dv-stage img{max-width:100%;max-height:82vh;border-radius:6px;box-shadow:0 12px 44px rgba(0,0,0,.28)}
+.docview .dv-stage iframe{width:100%;height:82vh;border:none;border-radius:8px;background:#fff;box-shadow:0 12px 44px rgba(0,0,0,.28)}
+.docview .dv-sheet{background:#fff;border-radius:6px;box-shadow:0 12px 44px rgba(0,0,0,.28);max-width:720px;width:100%;
+  padding:52px 60px;min-height:60vh;color:#1a1a1a}
+.docview .dv-sheet h1{font-size:27px;margin-bottom:12px}
+.docview .dv-sheet .ph-line{height:11px;background:#e6e9ed;border-radius:4px;margin-bottom:11px}
+.dv-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.dv-details summary{cursor:pointer;font-weight:600;color:var(--blue);padding:12px 2px;list-style:none;font-size:15px}
+.dv-details summary::-webkit-details-marker{display:none}
+.dv-details summary::before{content:"▸ ";}
+.dv-details[open] summary::before{content:"▾ ";}
+/* Echte Dokument-Thumbnails */
+.mini-thumb.img-thumb{background-size:cover;background-position:center top;font-size:0}
+.doc-thumb.has-img{background-size:cover !important;background-position:center top;font-size:0}
 </style>
 </head>
 <body>
@@ -452,8 +531,8 @@ tbody tr:last-child td{border-bottom:none}
 <!-- Login -->
 <div class="login-screen" id="loginScreen">
   <div class="login-card">
-    <div class="logo">B</div>
-    <h2>Abteilungsbildschirm</h2>
+    <div class="logo" id="loginLogo">B</div>
+    <h2 id="loginTitle">Abteilungsbildschirm</h2>
     <p class="lsub">Anmeldung — Rolle wählen für Demo</p>
     <div class="quick-users" id="quickUsers"></div>
     <div style="margin-top:22px;text-align:center">
@@ -747,10 +826,10 @@ function topbar(){
   const bar=el('div','topbar');
   bar.innerHTML=`
     <div class="brand" onclick="goHome()">
-      <div class="logo">B</div>
+      <div class="logo">${logoHtml()}</div>
       <div>
-        <div class="title">Abteilungsbildschirm</div>
-        <div class="subtitle">Digitale Informationszentrale</div>
+        <div class="title">${esc(orgName())}</div>
+        <div class="subtitle">${esc(orgSubtitle())}</div>
       </div>
     </div>
     <div class="clock" id="clock"></div>
@@ -785,9 +864,11 @@ function goHome(){ closeOverlay(); const m=$('#mainView'); if(m){m.innerHTML='';
 
 function renderHome(main){
   const d=dept();
-  // Ticker: kritische news
+  ensureLayout();migrateGeom(d.id);
+  const bg=(DB.bg||{})[d.id];
   const crit=pubOnly(DB.news.filter(n=>n.dept===d.id)).filter(n=>n.status==='red'||n.status==='yellow');
-  let html='';
+  let html='<div class="home-wrap'+(bg?' has-bg':'')+'" id="homeWrap">';
+  if(bg)html+=`<div class="home-bg" style="background-image:url('${bg}')"></div>`;
   if(crit.length){
     const isRed=crit.some(n=>n.status==='red');
     html+=`<div class="ticker ${isRed?'':'info'}"><span class="lbl">${isRed?'⚠ Wichtig':'ℹ Hinweis'}</span><div class="track"><span>${crit.map(n=>esc(n.title)).join('  ●  ')}  ●  ${crit.map(n=>esc(n.title)).join('  ●  ')}</span></div></div>`;
@@ -797,20 +878,304 @@ function renderHome(main){
       <h1>${d.icon} ${esc(d.name)}</h1>
       <div class="sub">${esc(d.location)} · ${DB.info[d.id]?DB.info[d.id].members+' Mitarbeitende':''} · Übersicht ${fmtDate(today())}</div>
     </div>
-    ${isAdmin()?`<button class="btn ghost" onclick="openAdmin()">⚙️ Inhalte verwalten</button>`:''}
+    ${isAdmin()?`<div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn ${EDIT?'':'ghost'}" onclick="toggleEdit()">${EDIT?'✓ Fertig':'✏️ Startseite anordnen'}</button>
+      <button class="btn ghost" onclick="openAdmin()">⚙️ Inhalte verwalten</button>
+    </div>`:''}
   </div>`;
-
-  html+='<div class="tiles" id="tiles"></div>';
+  html+='<div class="tiles" id="tiles"></div></div>';
   main.innerHTML=html;
 
   const grid=$('#tiles',main);
-  ensureLayout();
-  const layout=DB.layout[d.id]||[];
-  layout.forEach(item=>{
-    if(item.type==='docgallery')grid.appendChild(galleryTileEl(item,d));
-    else{const t=TILES[item.key];if(t)grid.appendChild(tileEl(item.key,t,d,item.id));}
+  buildTiles(grid,d);
+  if(!(DB.layout[d.id]||[]).length)grid.innerHTML=empty('🧩','Keine Kacheln aktiv',isAdmin()?'Auf «Startseite anordnen» tippen und Kacheln hinzufügen':'');
+  layoutHome();
+  if(EDIT){grid.classList.add('editing');showEditbar();showPalette();}else{removeEditbar();removePalette();}
+}
+function buildTiles(grid,d){
+  grid.innerHTML='';
+  (DB.layout[d.id]||[]).forEach(item=>{
+    let elm;
+    if(item.type==='docgallery')elm=galleryTileEl(item,d);
+    else{const t=TILES[item.key];if(!t)return;elm=tileEl(item.key,t,d);}
+    elm.dataset.id=item.id;elm.dataset.gx=item.x;elm.dataset.gy=item.y;
+    const origClick=elm.onclick;
+    elm.onclick=e=>{if(EDIT)return;origClick&&origClick.call(elm,e);};
+    elm.appendChild(makeEditTools(item));
+    const rz=el('div','rz');rz.addEventListener('pointerdown',e=>startResize(e,item));elm.appendChild(rz);
+    elm.addEventListener('pointerdown',e=>{if(EDIT)startDrag(e,item,elm);});
+    grid.appendChild(elm);
   });
-  if(!layout.length)grid.innerHTML=empty('🧩','Keine Kacheln aktiv',isAdmin()?'Über ⚙️ Administration → Startseite Kacheln hinzufügen':'');
+}
+function makeEditTools(item){
+  const wrap=el('div','edit-tools');
+  const cfg=el('button');cfg.innerHTML=item.type==='docgallery'?'✎':'⚙';cfg.title='Inhalt bearbeiten';
+  cfg.addEventListener('pointerdown',e=>e.stopPropagation());
+  cfg.onclick=e=>{e.stopPropagation();item.type==='docgallery'?editGallery(item.id):configTile(item);};
+  const rm=el('button','rm');rm.innerHTML='✕';rm.title='Kachel entfernen';
+  rm.addEventListener('pointerdown',e=>e.stopPropagation());
+  rm.onclick=e=>{e.stopPropagation();removeLayoutItem(item.id);};
+  wrap.appendChild(cfg);wrap.appendChild(rm);
+  return wrap;
+}
+
+/* ===================== Freies Raster-Layout (Dashboard-Baukasten) ===================== */
+const GCOLS=12, GROWH=104, GGAP=16;
+let EDIT=false, DRAG=null;
+function layoutDept(){return DB.layout[session.dept]||[];}
+function overlaps(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+function migrateGeom(dId){
+  const L=DB.layout[dId]||[];let changed=false;
+  L.forEach(it=>{if(!it.w||!it.h){it.w=4;it.h=it.type==='docgallery'?3:2;changed=true;}});
+  const placed=L.filter(it=>Number.isFinite(it.x)&&Number.isFinite(it.y));
+  L.filter(it=>!(Number.isFinite(it.x)&&Number.isFinite(it.y))).forEach(it=>{
+    const spot=freeSpotIn(placed,it.w,it.h);it.x=spot.x;it.y=spot.y;placed.push(it);changed=true;
+  });
+  if(changed)save();
+}
+function freeSpotIn(placed,w,h){
+  for(let y=0;y<400;y++)for(let x=0;x<=GCOLS-w;x++){
+    const cand={x,y,w,h};if(!placed.some(i=>overlaps(i,cand)))return{x,y};
+  }
+  return{x:0,y:0};
+}
+function gridGeom(cont){
+  const w=cont.clientWidth||cont.offsetWidth||1000;
+  const colW=(w-(GCOLS-1)*GGAP)/GCOLS;
+  return {w,colW,cols:GCOLS,rowH:GROWH,gap:GGAP};
+}
+function tilePx(it,g){return{
+  left:it.x*(g.colW+g.gap),top:it.y*(g.rowH+g.gap),
+  width:it.w*g.colW+(it.w-1)*g.gap,height:it.h*g.rowH+(it.h-1)*g.gap};}
+function layoutHome(skip){
+  const grid=$('#tiles');if(!grid)return;
+  const d=dept();const L=DB.layout[d.id]||[];
+  const stack=window.innerWidth<760;
+  if(stack){
+    grid.classList.remove('canvas');grid.classList.toggle('editing',EDIT);
+    grid.style.height='';
+    [...grid.querySelectorAll('.tile')].sort((a,b)=>{const A=L.find(x=>x.id===a.dataset.id)||{},B=L.find(x=>x.id===b.dataset.id)||{};return(A.y-B.y)||(A.x-B.x);}).forEach(elm=>{elm.style.left='';elm.style.top='';elm.style.width='';elm.style.height='';grid.appendChild(elm);});
+    return;
+  }
+  grid.classList.add('canvas');grid.classList.toggle('editing',EDIT);
+  const g=gridGeom(grid);let maxB=0;
+  L.forEach(it=>{maxB=Math.max(maxB,tilePx(it,g).top+tilePx(it,g).height);});
+  grid.querySelectorAll('.tile').forEach(elm=>{
+    if(elm===skip)return;const it=L.find(x=>x.id===elm.dataset.id);if(!it)return;
+    const p=tilePx(it,g);elm.style.left=p.left+'px';elm.style.top=p.top+'px';elm.style.width=p.width+'px';elm.style.height=p.height+'px';
+  });
+  grid.style.height=(maxB+ (EDIT?g.rowH:0))+'px';
+}
+function resolveCollisions(fixedId){
+  const L=layoutDept();const fixed=L.find(i=>i.id===fixedId);if(!fixed)return;
+  const placed=[fixed];
+  L.filter(i=>i.id!==fixedId).sort((a,b)=>a.y-b.y||a.x-b.x).forEach(o=>{
+    let guard=0;while(placed.some(p=>overlaps(p,o))&&guard++<400)o.y++;placed.push(o);
+  });
+}
+function firstFreeSpot(w,h){return freeSpotIn(layoutDept(),w,h);}
+/* Verschieben */
+function startDrag(e,item,elm){
+  if(window.innerWidth<760)return;
+  if(e.target.closest('.edit-tools')||e.target.closest('.rz'))return;
+  if(e.button!==undefined&&e.button!==0)return;
+  const grid=$('#tiles');const g=gridGeom(grid);const gr=grid.getBoundingClientRect();const r=elm.getBoundingClientRect();
+  DRAG={mode:'move',item,elm,g,gr,offX:e.clientX-r.left,offY:e.clientY-r.top};
+  elm.classList.add('dragging');ensurePlaceholder(item,g);
+  window.addEventListener('pointermove',onDragMove);
+  window.addEventListener('pointerup',endDrag,{once:true});
+  window.addEventListener('pointercancel',endDrag,{once:true});
+  e.preventDefault();
+}
+function onDragMove(e){
+  if(!DRAG||DRAG.mode!=='move')return;
+  const {elm,g,gr,offX,offY,item}=DRAG;
+  let x=e.clientX-gr.left-offX,y=e.clientY-gr.top-offY;
+  elm.style.left=x+'px';elm.style.top=Math.max(0,y)+'px';
+  let gx=Math.round(x/(g.colW+g.gap)),gy=Math.round(y/(g.rowH+g.gap));
+  gx=Math.max(0,Math.min(GCOLS-item.w,gx));gy=Math.max(0,gy);
+  if(gx!==item.x||gy!==item.y){item.x=gx;item.y=gy;resolveCollisions(item.id);}
+  updatePlaceholder(item,g);autoScrollWin(e.clientY);layoutHome(elm);
+}
+function endDrag(){
+  window.removeEventListener('pointermove',onDragMove);
+  if(!DRAG)return;const {elm}=DRAG;elm.classList.remove('dragging');DRAG=null;
+  removePlaceholder();save();layoutHome();syncDatasets();
+}
+/* Grösse ziehen (Ecke) */
+function startResize(e,item){
+  e.stopPropagation();e.preventDefault();if(!EDIT||window.innerWidth<760)return;
+  const grid=$('#tiles');const g=gridGeom(grid);
+  const elm=grid.querySelector('.tile[data-id="'+item.id+'"]');if(!elm)return;
+  DRAG={mode:'resize',item,elm,g,sx:e.clientX,sy:e.clientY,w0:item.w,h0:item.h};
+  elm.classList.add('resizing');ensurePlaceholder(item,g);
+  window.addEventListener('pointermove',onResizeMove);
+  window.addEventListener('pointerup',endResize,{once:true});
+  window.addEventListener('pointercancel',endResize,{once:true});
+}
+function onResizeMove(e){
+  if(!DRAG||DRAG.mode!=='resize')return;
+  const {item,elm,g,sx,sy,w0,h0}=DRAG;
+  let w=Math.max(2,Math.min(GCOLS-item.x,w0+Math.round((e.clientX-sx)/(g.colW+g.gap))));
+  let h=Math.max(1,h0+Math.round((e.clientY-sy)/(g.rowH+g.gap)));
+  if(w!==item.w||h!==item.h){item.w=w;item.h=h;resolveCollisions(item.id);}
+  const p=tilePx(item,g);elm.style.width=p.width+'px';elm.style.height=p.height+'px';
+  updatePlaceholder(item,g);autoScrollWin(e.clientY);layoutHome(elm);
+}
+function endResize(){
+  window.removeEventListener('pointermove',onResizeMove);
+  if(!DRAG)return;const {elm}=DRAG;elm.classList.remove('resizing');DRAG=null;
+  removePlaceholder();save();layoutHome();syncDatasets();
+}
+function syncDatasets(){const L=layoutDept();$('#tiles')&&$('#tiles').querySelectorAll('.tile').forEach(elm=>{const it=L.find(x=>x.id===elm.dataset.id);if(it){elm.dataset.gx=it.x;elm.dataset.gy=it.y;}});}
+function ensurePlaceholder(item,g){let ph=$('#gridPh');if(!ph){ph=el('div','grid-cell-ph');ph.id='gridPh';$('#tiles').appendChild(ph);}updatePlaceholder(item,g);}
+function updatePlaceholder(item,g){const ph=$('#gridPh');if(!ph)return;const p=tilePx(item,g);ph.style.left=p.left+'px';ph.style.top=p.top+'px';ph.style.width=p.width+'px';ph.style.height=p.height+'px';}
+function removePlaceholder(){const ph=$('#gridPh');if(ph)ph.remove();}
+function autoScrollWin(cy){const m=12;if(cy<90)window.scrollBy(0,-m);else if(cy>window.innerHeight-90)window.scrollBy(0,m);}
+/* Bearbeiten-Modus */
+function toggleEdit(){if(!isAdmin()){toast('Keine Berechtigung','err');return;}EDIT=!EDIT;const main=$('#mainView');if(main)renderHome(main);if(!EDIT){save();toast('Anordnung gespeichert','ok');}}
+function refreshHomeKeepEdit(){const main=$('#mainView');if(main)renderHome(main);}
+function configTile(item){
+  const map={news:'news',tasks:'tasks',projects:'projects',kpis:'kpis',events:'events',shift:'shift',info:'info'};
+  if(map[item.key])openAdmin(map[item.key]);
+  else toast('Diese Kachel zeigt automatisch aktuelle Inhalte','info');
+}
+function addBuiltinTile(key){const spot=firstFreeSpot(4,2);layoutDept().push({id:uid('tl'),type:'builtin',key,x:spot.x,y:spot.y,w:4,h:2});save();logAction('Kachel hinzugefügt',(TILES[key]||{}).name||key,'＋');refreshHomeKeepEdit();}
+function compactTiles(){
+  const L=layoutDept().slice().sort((a,b)=>a.y-b.y||a.x-b.x);const placed=[];
+  L.forEach(it=>{let y=0;for(;;y++){it.y=y;if(!placed.some(p=>overlaps(p,it)))break;}placed.push(it);});
+  save();layoutHome();syncDatasets();toast('Aufgeräumt','ok');
+}
+/* Editor-Werkzeugleiste */
+function showEditbar(){
+  removeEditbar();
+  const hasBg=!!((DB.bg||{})[session.dept]);
+  const bar=el('div','editbar');bar.id='editbar';
+  bar.innerHTML=`<span class="eb-title">🎨 Startseite gestalten</span>
+    <button onclick="togglePalette()">＋ Kachel</button>
+    <button onclick="pickBackground()">🖼 Hintergrund</button>
+    ${hasBg?'<button onclick="removeBackground()">Hintergrund entfernen</button>':''}
+    <button onclick="compactTiles()">🧹 Aufräumen</button>
+    <span class="sep"></span>
+    <button class="primary" onclick="toggleEdit()">✓ Fertig</button>`;
+  document.body.appendChild(bar);
+}
+function removeEditbar(){const b=$('#editbar');if(b)b.remove();}
+function showPalette(){
+  removePalette();
+  const used=layoutDept().filter(i=>i.type==='builtin').map(i=>i.key);
+  const avail=Object.keys(TILES).filter(k=>!used.includes(k));
+  const pal=el('div','palette');pal.id='palette';
+  pal.innerHTML=`<h4>Kacheln hinzufügen</h4>
+    ${avail.length?avail.map(k=>`<div class="pal-item" onclick="addBuiltinTile('${k}')"><span class="pic" style="background:${TILES[k].bg}">${TILES[k].icon}</span><span>${esc(TILES[k].name)}</span></div>`).join(''):'<div class="pal-empty">Alle Standard-Kacheln sind aktiv.</div>'}
+    <div class="pal-item" onclick="editGallery()" style="border-style:dashed"><span class="pic" style="background:var(--blue-light)">📁</span><span>Neue Dokumenten-Galerie</span></div>`;
+  document.body.appendChild(pal);
+}
+function removePalette(){const p=$('#palette');if(p)p.remove();}
+function togglePalette(){$('#palette')?removePalette():showPalette();}
+window.addEventListener('resize',()=>{if($('#tiles'))layoutHome();});
+
+/* ===================== Bilder: Komprimieren, Hintergrund, Thumbnails, Logo ===================== */
+function compressImage(file,maxW,quality){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      try{res(c.toDataURL('image/jpeg',quality));}catch(e){rej(e);}
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bild konnte nicht gelesen werden'));};
+    img.src=url;
+  });
+}
+function pickBackground(){
+  const inp=el('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    toast('Hintergrund wird verarbeitet…','info');
+    try{const data=await compressImage(f,1600,0.72);if(!DB.bg)DB.bg={};DB.bg[session.dept]=data;save();logAction('Hintergrundbild gesetzt',dept().name,'🖼');toast('Hintergrund gesetzt','ok');refreshHomeKeepEdit();}
+    catch(e){toast('Fehler: '+(e.message||e),'err');}
+  };
+  inp.click();
+}
+function removeBackground(){if(DB.bg&&DB.bg[session.dept]){delete DB.bg[session.dept];save();logAction('Hintergrundbild entfernt',dept().name,'🖼');toast('Hintergrund entfernt','ok');refreshHomeKeepEdit();}}
+
+/* Thumbnails beim Upload (Bilder direkt, PDF via pdf.js erste Seite) */
+let _pdfjs=null;
+function loadPdfJs(){
+  if(_pdfjs)return _pdfjs;
+  _pdfjs=new Promise((res,rej)=>{
+    if(window.pdfjsLib){res(window.pdfjsLib);return;}
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload=()=>{try{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}catch(e){}res(window.pdfjsLib);};
+    s.onerror=()=>rej(new Error('pdf.js konnte nicht geladen werden'));
+    document.head.appendChild(s);
+  });
+  return _pdfjs;
+}
+async function pdfThumb(file){
+  const lib=await loadPdfJs();
+  const buf=await file.arrayBuffer();
+  const pdf=await lib.getDocument({data:buf}).promise;
+  const page=await pdf.getPage(1);
+  const base=page.getViewport({scale:1});
+  const scale=Math.min(1.4,440/base.width);
+  const vp=page.getViewport({scale});
+  const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
+  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  return c.toDataURL('image/jpeg',0.82);
+}
+async function makeThumb(file,ext){
+  try{
+    if(['png','jpg','jpeg','gif','webp','bmp'].includes(ext))return await compressImage(file,440,0.72);
+    if(ext==='svg'){return await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.onerror=()=>r(null);fr.readAsDataURL(file);});}
+    if(ext==='pdf')return await pdfThumb(file);
+  }catch(e){/* Fallback: kein Thumb */}
+  return null;
+}
+
+/* Einstellungen / Logo */
+function ensureSettings(){if(!DB.settings)DB.settings={};}
+function logoHtml(){ensureSettings();return DB.settings.logo?`<img src="${DB.settings.logo}" alt="Logo">`:'B';}
+function orgName(){ensureSettings();return DB.settings.orgName||'Abteilungsbildschirm';}
+function orgSubtitle(){ensureSettings();return DB.settings.subtitle||'Digitale Informationszentrale';}
+function applyBranding(){const l=$('#loginLogo'),t=$('#loginTitle');if(l)l.innerHTML=logoHtml();if(t)t.textContent=orgName();}
+function pickLogo(){
+  const inp=el('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{
+    const f=inp.files&&inp.files[0];if(!f)return;
+    toast('Logo wird verarbeitet…','info');
+    try{ensureSettings();DB.settings.logo=await compressImage(f,256,0.9);save();logAction('Logo geändert','','🏷');toast('Logo gespeichert','ok');render();openAdmin('settings');}
+    catch(e){toast('Fehler: '+(e.message||e),'err');}
+  };
+  inp.click();
+}
+function removeLogo(){ensureSettings();delete DB.settings.logo;save();logAction('Logo entfernt','','🏷');toast('Logo entfernt','ok');render();openAdmin('settings');}
+function saveOrgText(){ensureSettings();DB.settings.orgName=$('#setOrg').value.trim();DB.settings.subtitle=$('#setSub').value.trim();save();logAction('Kopfzeile angepasst','','🏷');toast('Gespeichert','ok');render();openAdmin('settings');}
+function adminSettings(b,d){
+  ensureSettings();
+  b.innerHTML=`
+    <h3 style="font-size:20px;margin-bottom:6px">Einstellungen</h3>
+    <p style="color:var(--text-soft);margin-bottom:18px">Logo und Kopfzeile für alle Abteilungsbildschirme.</p>
+    <div class="panel"><div class="panel-head"><h3>🏷 Logo</h3></div><div class="panel-body">
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div style="width:72px;height:72px;border-radius:16px;overflow:hidden;background:var(--blue);display:grid;place-items:center;color:#fff;font-weight:800;font-size:32px">${DB.settings.logo?`<img src="${DB.settings.logo}" style="width:100%;height:100%;object-fit:cover">`:'B'}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="pickLogo()">⬆ Logo hochladen</button>
+          ${DB.settings.logo?'<button class="btn ghost" onclick="removeLogo()">Entfernen</button>':''}
+        </div>
+      </div>
+      <p style="color:var(--text-soft);font-size:13px;margin-top:12px">Quadratisch empfohlen (z.B. 256×256). Wird oben links und im Login angezeigt.</p>
+    </div></div>
+    <div class="panel"><div class="panel-head"><h3>✏️ Kopfzeile</h3></div><div class="panel-body">
+      <div class="field"><label>Titel</label><input class="input" id="setOrg" value="${esc(DB.settings.orgName||'')}" placeholder="Abteilungsbildschirm"></div>
+      <div class="field"><label>Untertitel</label><input class="input" id="setSub" value="${esc(DB.settings.subtitle||'')}" placeholder="Digitale Informationszentrale"></div>
+      <button class="btn" onclick="saveOrgText()">✓ Speichern</button>
+    </div></div>`;
 }
 
 /* Ensure per-department layout exists (migration for older data) */
@@ -854,10 +1219,12 @@ function miniThumb(x){
   const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
   const bg=fc==='fi-pdf'?'#d63b3b':fc==='fi-doc'?'#2b579a':fc==='fi-xls'?'#217346':fc==='fi-ppt'?'#d24726':fc==='fi-img'?'#7b4fc0':'#6b7480';
   const ic=isImg?'🖼️':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄';
-  if(isImg&&x.fileId&&SYNC_ON&&BACKEND.bucketId){
-    return `<div class="mini-thumb" title="${esc(x.title)}" style="background:url('${fileViewUrl(x.fileId)}') center/cover" onclick="event.stopPropagation();openDoc('${x.id}')"></div>`;
-  }
-  return `<div class="mini-thumb" title="${esc(x.title)}" style="background:linear-gradient(135deg,${bg},${bg}cc)" onclick="event.stopPropagation();openDoc('${x.id}')">${ic}</div>`;
+  const oc=`onclick="event.stopPropagation();if(!EDIT)openDoc('${x.id}')"`;
+  if(x.thumb)
+    return `<div class="mini-thumb img-thumb" title="${esc(x.title)}" style="background-image:url('${x.thumb}')" ${oc}></div>`;
+  if(isImg&&x.fileId&&SYNC_ON&&BACKEND.bucketId)
+    return `<div class="mini-thumb img-thumb" title="${esc(x.title)}" style="background-image:url('${fileViewUrl(x.fileId)}')" ${oc}></div>`;
+  return `<div class="mini-thumb" title="${esc(x.title)}" style="background:linear-gradient(135deg,${bg},${bg}cc)" ${oc}>${ic}</div>`;
 }
 function openGallery(id){
   const g=(DB.layout[session.dept]||[]).find(x=>x.id===id);if(!g)return;
@@ -1190,9 +1557,10 @@ function docGrid(ds){
     const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
     const c=el('div','doc-card');c.onclick=()=>openDoc(x.id);
     const bg=fc==='fi-pdf'?'#d63b3b':fc==='fi-doc'?'#2b579a':fc==='fi-xls'?'#217346':fc==='fi-ppt'?'#d24726':fc==='fi-img'?'#7b4fc0':'#6b7480';
-    c.innerHTML=`<div class="doc-thumb" style="background:linear-gradient(135deg,${bg},${bg}cc)">
+    const img=x.thumb||(isImg&&x.fileId&&SYNC_ON&&BACKEND.bucketId?fileViewUrl(x.fileId):null);
+    c.innerHTML=`<div class="doc-thumb ${img?'has-img':''}" style="${img?`background-image:url('${img}')`:`background:linear-gradient(135deg,${bg},${bg}cc)`}">
         ${x.important?'<span class="imp">★ Wichtig</span>':''}
-        ${isImg?'🖼️':fc==='fi-pdf'?'📄':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':'📄'}
+        ${img?'':(isImg?'🖼️':fc==='fi-pdf'?'📄':fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':'📄')}
       </div>
       <div class="dc-body">
         <div class="dc-title">${esc(x.title)}</div>
@@ -1210,39 +1578,42 @@ function openDoc(id){
   const isImg=['png','jpg','jpeg','gif','svg'].includes(x.fileType);
   const isPdf=x.fileType==='pdf';
   const[fc,ft]=fileMeta(x.fileType);
+  const live=x.fileId&&SYNC_ON&&BACKEND.bucketId;
   let stage='';
-  if(x.fileId&&SYNC_ON&&BACKEND.bucketId&&isImg){
-    stage=`<div class="preview-stage"><img class="preview-img" src="${fileViewUrl(x.fileId)}" alt="${esc(x.title)}"></div>`;
-  }else if(x.fileId&&SYNC_ON&&BACKEND.bucketId&&isPdf){
-    stage=`<div class="preview-stage" style="padding:0"><iframe src="${fileViewUrl(x.fileId)}" style="width:100%;height:72vh;border:none;border-radius:14px;background:#fff" title="${esc(x.title)}"></iframe></div>`;
-  }else if(isImg){
-    stage=`<div class="preview-stage"><svg class="preview-img" viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg"><rect width="640" height="400" fill="#e8eef4"/><rect x="40" y="40" width="560" height="240" rx="8" fill="#cdd8e2"/><circle cx="150" cy="150" r="45" fill="#a7b8c8"/><path d="M40 280 L200 160 L340 250 L460 130 L600 240 L600 280 Z" fill="#8fa6ba"/><text x="320" y="345" font-family="sans-serif" font-size="22" fill="#5b6570" text-anchor="middle">${esc(x.fileName)}</text></svg></div>`;
+  if(live&&isImg){
+    stage=`<div class="dv-stage"><img src="${fileViewUrl(x.fileId)}" alt="${esc(x.title)}"></div>`;
+  }else if(live&&isPdf){
+    stage=`<div class="dv-stage" style="padding:0;background:#fff"><iframe src="${fileViewUrl(x.fileId)}#view=FitH" title="${esc(x.title)}"></iframe></div>`;
+  }else if(x.thumb){
+    stage=`<div class="dv-stage"><img src="${x.thumb}" alt="${esc(x.title)}"></div>`;
   }else if(isPdf){
-    stage=`<div class="preview-stage"><div class="preview-doc">
+    stage=`<div class="dv-stage"><div class="dv-sheet">
       <h1>${esc(x.title)}</h1>
-      <div style="color:#888;font-size:13px;margin-bottom:20px">${esc(x.fileName)} · Version ${x.version}</div>
-      <p>${esc(x.desc)}</p>
+      <div style="color:#888;font-size:13px;margin-bottom:22px">${esc(x.fileName)} · Version ${x.version}</div>
+      <p style="color:#444;line-height:1.7;margin-bottom:18px">${esc(x.desc)}</p>
       <div class="ph-line" style="width:100%"></div><div class="ph-line" style="width:92%"></div><div class="ph-line" style="width:96%"></div><div class="ph-line" style="width:70%"></div>
       <div style="height:20px"></div>
       <div class="ph-line" style="width:100%"></div><div class="ph-line" style="width:88%"></div><div class="ph-line" style="width:94%"></div><div class="ph-line" style="width:40%"></div>
     </div></div>`;
   }else{
-    stage=`<div class="preview-stage"><div class="preview-file-ic"><div class="big">${fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄'}</div><div style="font-size:20px;font-weight:600">${esc(x.fileName)}</div><div style="opacity:.7;margin-top:6px">Keine Inline-Vorschau · Download zum Öffnen</div></div></div>`;
+    stage=`<div class="dv-stage"><div class="preview-file-ic" style="text-align:center;color:#5b6570"><div style="font-size:82px;margin-bottom:12px">${fc==='fi-xls'?'📊':fc==='fi-ppt'?'📽️':fc==='fi-doc'?'📝':'📄'}</div><div style="font-size:20px;font-weight:600">${esc(x.fileName)}</div><div style="opacity:.7;margin-top:6px">Keine Inline-Vorschau · Herunterladen zum Öffnen</div></div></div>`;
   }
   const versions=Array.from({length:x.version},(_,i)=>x.version-i).map(v=>`<div class="ver-item"><span class="ver-tag ${v===x.version?'':'old'}">v${v}</span> ${v===x.version?'<b>Aktuelle Version</b>':'Frühere Version'} <span style="margin-left:auto;color:var(--text-soft);font-size:13px">${v===x.version?fmtDate(x.uploaded):'—'}</span>${v!==x.version?'<button class="btn sm subtle" style="margin-left:8px">Wiederherstellen</button>':''}</div>`).join('');
 
-  const body=el('div');
+  const body=el('div','docview');
   body.innerHTML=`
-    <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:24px" class="doc-detail-grid">
-      <div>${stage}
-        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
-          <button class="btn" onclick="downloadDoc('${x.id}')">⬇ Herunterladen</button>
-          ${canEditDept(x.dept)?`<button class="btn ghost" onclick="openUpload('${x.id}')">✎ Bearbeiten / Ersetzen</button>`:''}
-          ${canEditDept(x.dept)?`<button class="btn ghost" onclick="toggleImportant('${x.id}')">${x.important?'★ Wichtig entfernen':'☆ Als wichtig markieren'}</button>`:''}
-        </div>
-      </div>
-      <div>
-        <div class="panel"><div class="panel-head"><h3>Details</h3>${badge(x.status)}</div><div class="panel-body">
+    ${stage}
+    <div class="dv-bar">
+      <button class="btn" onclick="downloadDoc('${x.id}')">⬇ Herunterladen</button>
+      ${live?`<button class="btn ghost" onclick="window.open('${fileViewUrl(x.fileId)}','_blank')">⛶ Vollbild / neuer Tab</button>`:''}
+      ${canEditDept(x.dept)?`<button class="btn ghost" onclick="openUpload('${x.id}')">✎ Bearbeiten / Ersetzen</button>`:''}
+      ${canEditDept(x.dept)?`<button class="btn ghost" onclick="toggleImportant('${x.id}')">${x.important?'★ Wichtig entfernen':'☆ Als wichtig markieren'}</button>`:''}
+      <span style="flex:1"></span>${badge(x.status)}
+    </div>
+    <details class="dv-details">
+      <summary>Details &amp; Versionsverlauf</summary>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:22px;margin-top:8px" class="doc-detail-grid">
+        <div class="panel"><div class="panel-head"><h3>Details</h3></div><div class="panel-body">
           <p style="margin-bottom:16px;color:var(--text-soft)">${esc(x.desc)}</p>
           <div class="meta-grid">
             <div class="meta-item"><div class="m-k">Abteilung</div><div class="m-v">${esc(dept(x.dept).name)}</div></div>
@@ -1259,8 +1630,8 @@ function openDoc(id){
         </div></div>
         <div class="panel"><div class="panel-head"><h3>Versionsverlauf</h3></div><div class="panel-body">${versions}</div></div>
       </div>
-    </div>`;
-  openOverlay(sheet(x.title,fc==='fi-pdf'?'📄':'📁','Dokumentvorschau · '+dept(x.dept).name,body));
+    </details>`;
+  openOverlay(sheet(x.title,isImg?'🖼️':isPdf?'📄':'📁','Dokument · '+dept(x.dept).name,body));
 }
 function toggleImportant(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;x.important=!x.important;save();logAction(x.important?'Als wichtig markiert':'Wichtig-Markierung entfernt',x.title,'★');toast(x.important?'Als wichtig markiert':'Markierung entfernt','ok');openDoc(id);}
 function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;
@@ -1357,6 +1728,7 @@ async function saveUpload(editId){
       const f=$('#replaceInput').files[0];const ext=f.name.split('.').pop().toLowerCase();
       if(!ALLOWED_TYPES.includes(ext)){toast('Dateityp nicht erlaubt','err');return;}
       if(SYNC_ON&&BACKEND.bucketId){toast('Datei wird hochgeladen…','info');try{x.fileId=await uploadFileToBucket(f);}catch(e){toast('Upload fehlgeschlagen: '+(e.message||e),'err');return;}}
+      x.thumb=await makeThumb(f,ext)||null;
       x.fileName=f.name;x.fileType=ext;x.size=f.size;x.version++;x.uploaded=today();
     }
     save();logAction(replaced?`Dokument ersetzt → v${x.version}`:'Dokument bearbeitet',x.title,replaced?'♻️':'✎');
@@ -1372,7 +1744,8 @@ async function saveUpload(editId){
       const ext=f.name.split('.').pop().toLowerCase();
       let fileId=null;
       if(SYNC_ON&&BACKEND.bucketId){try{fileId=await uploadFileToBucket(f);}catch(e){toast('Upload fehlgeschlagen: '+f.name,'err');continue;}}
-      DB.documents.unshift({id:uid('d'),dept:session.dept,fileName:f.name,fileType:ext,size:f.size,version:1,uploaded:today(),fileId,...common,title:picked.length>1?`${title} (${idx+1})`:title});
+      const thumb=await makeThumb(f,ext);
+      DB.documents.unshift({id:uid('d'),dept:session.dept,fileName:f.name,fileType:ext,size:f.size,version:1,uploaded:today(),fileId,thumb,...common,title:picked.length>1?`${title} (${idx+1})`:title});
     }
     save();logAction('Dokument hochgeladen',title+(picked.length>1?` (${picked.length} Dateien)`:''),'📤');
     toast(picked.length>1?picked.length+' Dokumente hochgeladen':'Dokument hochgeladen','ok');
@@ -1477,17 +1850,19 @@ window.addEventListener('keydown',e=>{
 let adminTab='content';
 function openAdmin(focus){
   if(!isAdmin()){toast('Keine Berechtigung','err');return;}
-  adminTab=focus&&['news','tasks','projects','kpis','events','shift','info','tiles'].includes(focus)?focus:'content';
+  adminTab=focus&&['news','tasks','projects','kpis','events','shift','info','tiles','settings'].includes(focus)?focus:'content';
   const body=el('div');
   renderAdmin(body);
   openOverlay(sheet('Administration','⚙️','Inhalte verwalten · '+dept().name,body));
 }
 function renderAdmin(host){
   const d=dept();
-  const tabs=[['content','Übersicht'],['news','Meldungen'],['tasks','Aufgaben'],['projects','Projekte'],['kpis','Kennzahlen'],['events','Termine'],['info','Abteilung'],['tiles','Startseite & Kacheln'],['log','Protokoll']];
+  const tabs=[['content','Übersicht'],['news','Meldungen'],['tasks','Aufgaben'],['projects','Projekte'],['kpis','Kennzahlen'],['events','Termine'],['info','Abteilung'],['tiles','Startseite & Kacheln']];
+  if(isSys())tabs.push(['settings','Einstellungen']);
+  tabs.push(['log','Protokoll']);
   host.innerHTML=`<div class="tabs">${tabs.map(([k,l])=>`<button class="tab ${adminTab===k?'active':''}" onclick="setAdminTab('${k}')">${l}</button>`).join('')}</div><div id="adminBody"></div>`;
   const b=$('#adminBody',host);
-  ({content:adminContent,news:adminNews,tasks:adminTasks,projects:adminProjects,kpis:adminKpis,events:adminEvents,info:adminInfo,tiles:adminTiles,log:adminLog}[adminTab]||adminContent)(b,d);
+  ({content:adminContent,news:adminNews,tasks:adminTasks,projects:adminProjects,kpis:adminKpis,events:adminEvents,info:adminInfo,tiles:adminTiles,settings:adminSettings,log:adminLog}[adminTab]||adminContent)(b,d);
 }
 function setAdminTab(k){adminTab=k;const host=$('.sheet-body');if(host){const b=el('div');renderAdmin(b);host.innerHTML='';host.appendChild(b);}}
 
@@ -1737,7 +2112,11 @@ function adminTiles(b,d){
   const avail=Object.keys(TILES).filter(k=>!used.includes(k));
   b.innerHTML=`
     <h3 style="font-size:20px;margin-bottom:6px">Startseite zusammenstellen</h3>
-    <p style="color:var(--text-soft);margin-bottom:18px">Kacheln per <b>Drag-and-drop</b>: von «Verfügbar» nach links <b>reinziehen</b>, nach rechts <b>rausschieben</b>, innerhalb «Aktiv» sortieren. ✕ entfernt direkt.</p>
+    <div class="panel" style="margin-bottom:16px;background:var(--blue-light);border-color:var(--blue)"><div class="panel-body" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px"><b>✨ Neu: Freies Anordnen direkt auf der Startseite</b><div style="color:var(--text-soft);font-size:13.5px;margin-top:2px">Kacheln frei verschieben, an den Ecken grösser/kleiner ziehen und Hintergrundbild setzen.</div></div>
+      <button class="btn" onclick="closeOverlay();EDIT=false;toggleEdit()">✏️ Startseite anordnen</button>
+    </div></div>
+    <p style="color:var(--text-soft);margin-bottom:18px">Hier kannst du Kacheln <b>hinzufügen</b> oder <b>entfernen</b>. Zum Positionieren und Vergrössern nutze «Startseite anordnen».</p>
     <div class="dnd-board">
       <div class="dnd-zone" data-zone="active"><h4>▦ Aktiv auf Startseite (${layout.length})</h4><div class="dnd-list" id="zoneActive"></div></div>
       <div class="dnd-zone" data-zone="avail"><h4>⊞ Verfügbar — hierhin ziehen zum Entfernen</h4><div class="dnd-list" id="zoneAvail"></div>
@@ -1768,7 +2147,7 @@ function adminTiles(b,d){
   });
   if(!avail.length)zv.innerHTML='<div style="color:var(--text-soft);padding:8px">Alle Standard-Kacheln aktiv.</div>';
 }
-function removeLayoutItem(id){const L=DB.layout[session.dept];const it=L.find(x=>x.id===id);DB.layout[session.dept]=L.filter(x=>x.id!==id);save();logAction('Kachel entfernt',it?(it.title||(TILES[it.key]||{}).name||''):'','✕');toast('Kachel entfernt','ok');refreshAdmin();goHomeRefresh();}
+function removeLayoutItem(id){const L=DB.layout[session.dept];const it=L.find(x=>x.id===id);DB.layout[session.dept]=L.filter(x=>x.id!==id);save();logAction('Kachel entfernt',it?(it.title||(TILES[it.key]||{}).name||''):'','✕');toast('Kachel entfernt','ok');refreshAdmin();if(EDIT)refreshHomeKeepEdit();else goHomeRefresh();}
 
 /* Pointer-basiertes Drag & Drop (Maus + Touch) */
 let DND=null;
@@ -2029,7 +2408,7 @@ function loginAs(id){
 }
 function loginPublic(){session.user=null;session.dept=DB.departments[0].id;$('#loginScreen').classList.add('hidden');render();toast('Öffentlicher Modus','info');}
 function logout(){session.user=null;showLogin();}
-function showLogin(){buildQuickUsers();$('#loginScreen').classList.remove('hidden');}
+function showLogin(){buildQuickUsers();applyBranding();$('#loginScreen').classList.remove('hidden');}
 
 /* =========================================================================
    CLOCK
@@ -2041,6 +2420,7 @@ setInterval(tickClock,1000);
    INIT
    ========================================================================= */
 buildQuickUsers();
+applyBranding();
 initBackend();
 if(KIOSK&&DB.departments.some(d=>d.id===KIOSK)){
   session.user=null;session.dept=KIOSK;
