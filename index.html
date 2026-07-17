@@ -45,7 +45,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 
 /* ---------- Topbar ---------- */
 .topbar{
-  display:flex;align-items:center;gap:20px;
+  display:flex;align-items:center;gap:20px;flex-wrap:wrap;
   background:var(--anthracite);color:#fff;
   padding:14px 26px;position:sticky;top:0;z-index:40;
   box-shadow:0 2px 12px rgba(0,0,0,.25);
@@ -148,7 +148,7 @@ main{flex:1;padding:26px clamp(16px,4vw,42px)}
 }
 .tile .badge-count.q{background:var(--yellow)}
 .tile .tile-body{padding:16px 22px 22px;flex:1;display:flex;flex-direction:column}
-.tile h3{font-size:22px;font-weight:700;margin-bottom:6px;color:var(--anthracite)}
+.tile h3{font-size:22px;font-weight:700;margin-bottom:6px;color:var(--anthracite);overflow-wrap:anywhere;hyphens:auto}
 .tile .desc{color:var(--text-soft);font-size:15px;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tile .live-line{color:var(--text);font-weight:600}
 :where(button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--blue);outline-offset:2px}
@@ -422,6 +422,13 @@ tbody tr:last-child td{border-bottom:none}
 .sec-title:first-child{margin-top:0}
 
 /* Responsive */
+@media(max-width:900px){
+  .topbar{gap:12px;padding:12px 18px}
+  .topbar .clock{display:none}
+  .brand .subtitle{display:none}
+  .user-chip .u-info{display:none}
+  .dept-switch .name{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
 @media(max-width:760px){
   body{font-size:16px}
   .topbar{padding:11px 14px;gap:10px;flex-wrap:wrap}
