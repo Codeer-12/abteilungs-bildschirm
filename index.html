@@ -757,7 +757,15 @@ function load(){
   try{ const s=localStorage.getItem(LS_KEY); if(s) return JSON.parse(s); }catch(e){}
   const d=seed(); localStorage.setItem(LS_KEY,JSON.stringify(d)); return d;
 }
-function save(){ if(!applyingRemote)DB._updatedAt=Date.now(); localStorage.setItem(LS_KEY,JSON.stringify(DB)); schedulePush(); }
+function save(){
+  if(!applyingRemote)DB._updatedAt=Date.now();
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(DB)); save._warned=false; }
+  catch(e){
+    console.warn('localStorage save fehlgeschlagen (evtl. Quota):',e);
+    if(!save._warned){save._warned=true;try{toast('Lokaler Speicher voll — grosse Bilder/Thumbnails reduzieren. Änderungen werden (falls online) trotzdem synchronisiert.','err');}catch(_){}}
+  }
+  schedulePush();
+}
 function resetDB(){ localStorage.removeItem(LS_KEY); DB=load(); toast('Daten zurückgesetzt','info'); render(); }
 
 /* ---------- Helpers ---------- */
@@ -865,10 +873,10 @@ function goHome(){ closeOverlay(); const m=$('#mainView'); if(m){m.innerHTML='';
 function renderHome(main){
   const d=dept();
   ensureLayout();migrateGeom(d.id);
-  const bg=(DB.bg||{})[d.id];
+  const bgSrc=safeImgSrc((DB.bg||{})[d.id]);
   const crit=pubOnly(DB.news.filter(n=>n.dept===d.id)).filter(n=>n.status==='red'||n.status==='yellow');
-  let html='<div class="home-wrap'+(bg?' has-bg':'')+'" id="homeWrap">';
-  if(bg)html+=`<div class="home-bg" style="background-image:url('${bg}')"></div>`;
+  let html='<div class="home-wrap'+(bgSrc?' has-bg':'')+'" id="homeWrap">';
+  if(bgSrc)html+=`<div class="home-bg" style="background-image:url('${bgSrc}')"></div>`;
   if(crit.length){
     const isRed=crit.some(n=>n.status==='red');
     html+=`<div class="ticker ${isRed?'':'info'}"><span class="lbl">${isRed?'⚠ Wichtig':'ℹ Hinweis'}</span><div class="track"><span>${crit.map(n=>esc(n.title)).join('  ●  ')}  ●  ${crit.map(n=>esc(n.title)).join('  ●  ')}</span></div></div>`;
@@ -1140,7 +1148,9 @@ async function makeThumb(file,ext){
 
 /* Einstellungen / Logo */
 function ensureSettings(){if(!DB.settings)DB.settings={};}
-function logoHtml(){ensureSettings();return DB.settings.logo?`<img src="${DB.settings.logo}" alt="Logo">`:'B';}
+/* Nur data:image/ oder http(s) erlauben und für Attribut-/CSS-url()-Kontext neutralisieren */
+function safeImgSrc(u){if(typeof u!=='string')return '';if(!(/^data:image\//i.test(u)||/^https?:\/\//i.test(u)))return '';return u.replace(/["'()<>\s\\]/g,c=>'%'+c.charCodeAt(0).toString(16).padStart(2,'0'));}
+function logoHtml(){ensureSettings();const s=safeImgSrc(DB.settings.logo);return s?`<img src="${s}" alt="Logo">`:'B';}
 function orgName(){ensureSettings();return DB.settings.orgName||'Abteilungsbildschirm';}
 function orgSubtitle(){ensureSettings();return DB.settings.subtitle||'Digitale Informationszentrale';}
 function applyBranding(){const l=$('#loginLogo'),t=$('#loginTitle');if(l)l.innerHTML=logoHtml();if(t)t.textContent=orgName();}
@@ -1163,7 +1173,7 @@ function adminSettings(b,d){
     <p style="color:var(--text-soft);margin-bottom:18px">Logo und Kopfzeile für alle Abteilungsbildschirme.</p>
     <div class="panel"><div class="panel-head"><h3>🏷 Logo</h3></div><div class="panel-body">
       <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
-        <div style="width:72px;height:72px;border-radius:16px;overflow:hidden;background:var(--blue);display:grid;place-items:center;color:#fff;font-weight:800;font-size:32px">${DB.settings.logo?`<img src="${DB.settings.logo}" style="width:100%;height:100%;object-fit:cover">`:'B'}</div>
+        <div style="width:72px;height:72px;border-radius:16px;overflow:hidden;background:var(--blue);display:grid;place-items:center;color:#fff;font-weight:800;font-size:32px">${safeImgSrc(DB.settings.logo)?`<img src="${safeImgSrc(DB.settings.logo)}" style="width:100%;height:100%;object-fit:cover">`:'B'}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn" onclick="pickLogo()">⬆ Logo hochladen</button>
           ${DB.settings.logo?'<button class="btn ghost" onclick="removeLogo()">Entfernen</button>':''}
@@ -1605,7 +1615,7 @@ function openDoc(id){
     ${stage}
     <div class="dv-bar">
       <button class="btn" onclick="downloadDoc('${x.id}')">⬇ Herunterladen</button>
-      ${live?`<button class="btn ghost" onclick="window.open('${fileViewUrl(x.fileId)}','_blank')">⛶ Vollbild / neuer Tab</button>`:''}
+      ${live?`<button class="btn ghost" onclick="window.open('${fileViewUrl(x.fileId)}','_blank','noopener,noreferrer')">⛶ Vollbild / neuer Tab</button>`:''}
       ${canEditDept(x.dept)?`<button class="btn ghost" onclick="openUpload('${x.id}')">✎ Bearbeiten / Ersetzen</button>`:''}
       ${canEditDept(x.dept)?`<button class="btn ghost" onclick="toggleImportant('${x.id}')">${x.important?'★ Wichtig entfernen':'☆ Als wichtig markieren'}</button>`:''}
       <span style="flex:1"></span>${badge(x.status)}
@@ -1635,7 +1645,7 @@ function openDoc(id){
 }
 function toggleImportant(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;x.important=!x.important;save();logAction(x.important?'Als wichtig markiert':'Wichtig-Markierung entfernt',x.title,'★');toast(x.important?'Als wichtig markiert':'Markierung entfernt','ok');openDoc(id);}
 function downloadDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x)return;
-  if(x.fileId&&SYNC_ON&&BACKEND.bucketId){window.open(fileDownloadUrl(x.fileId),'_blank');}
+  if(x.fileId&&SYNC_ON&&BACKEND.bucketId){window.open(fileDownloadUrl(x.fileId),'_blank','noopener,noreferrer');}
   toast('Download gestartet: '+x.fileName,'ok');logAction('Dokument heruntergeladen',x.title,'⬇');}
 function deleteDoc(id){const x=DB.documents.find(d=>d.id===id);if(!x||!canEditDept(x.dept))return;confirmModal('Dokument löschen?',`«${x.title}» wird unwiderruflich gelöscht.`,'Löschen',()=>{
   if(x.fileId&&AW&&BACKEND.bucketId){AW.storage.from(BACKEND.bucketId).remove([x.fileId]).catch(()=>{});}
