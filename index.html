@@ -67,7 +67,7 @@ input,select,textarea{font-family:inherit;font-size:1rem}
 }
 .dept-switch:hover{background:#464b53}
 .dept-switch .dot{width:11px;height:11px;border-radius:50%;background:var(--blue)}
-.dept-switch .name{font-weight:600;font-size:16px}
+.dept-switch .name{font-weight:600;font-size:16px;min-width:0;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dept-switch .chev{color:#9aa3ad;font-size:13px}
 
 .user-chip{
@@ -427,14 +427,14 @@ tbody tr:last-child td{border-bottom:none}
   .topbar .clock{display:none}
   .brand .subtitle{display:none}
   .user-chip .u-info{display:none}
-  .dept-switch .name{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dept-switch .name{min-width:0;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 }
 @media(max-width:760px){
   body{font-size:16px}
   .topbar{padding:11px 14px;gap:10px;flex-wrap:wrap}
   .brand .subtitle{display:none}
   .user-chip .u-info{display:none}
-  .dept-switch .name{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dept-switch .name{min-width:0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   main{padding:18px 14px}
   .grid-2,.grid-3{grid-template-columns:1fr}
   .sheet-head{padding:14px 16px;flex-wrap:wrap}
