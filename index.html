@@ -149,7 +149,12 @@ main{flex:1;padding:26px clamp(16px,4vw,42px)}
 .tile .badge-count.q{background:var(--yellow)}
 .tile .tile-body{padding:16px 22px 22px;flex:1;display:flex;flex-direction:column}
 .tile h3{font-size:22px;font-weight:700;margin-bottom:6px;color:var(--anthracite)}
-.tile .desc{color:var(--text-soft);font-size:15px;flex:1}
+.tile .desc{color:var(--text-soft);font-size:15px;flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile .live-line{color:var(--text);font-weight:600}
+:where(button,input,select,textarea,[tabindex]):focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+body.kiosk,body.kiosk *{cursor:none!important}
+.s-clear{width:32px;height:32px;border-radius:50%;background:var(--gray-bg);display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.s-clear:hover{background:#e2e7ec}
 .tile .tile-foot{
   display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:var(--text-soft);
   padding-top:12px;border-top:1px solid var(--border);
@@ -550,11 +555,18 @@ async function uploadFileToBucket(f){
 }
 function fileViewUrl(id){return `${BACKEND.url}/storage/v1/object/public/${BACKEND.bucketId}/${id}`;}
 function fileDownloadUrl(id){return `${BACKEND.url}/storage/v1/object/public/${BACKEND.bucketId}/${id}?download`;}
+let lastSyncState=null;
 function setSyncBadge(ok){
   const c=document.getElementById('clock');
   if(c)c.title=ok?'Zentrale Datenbank verbunden':'Sync nicht verbunden';
   const b=document.getElementById('syncDot');
   if(b)b.style.background=ok?'var(--green)':'var(--yellow)';
+  if(ok!==lastSyncState){
+    if(ok&&lastSyncState===null)toast('☁ Zentrale Datenbank verbunden','info');
+    else if(ok&&lastSyncState===false)toast('☁ Verbindung wiederhergestellt','ok');
+    else if(!ok)toast('Keine Verbindung – Änderungen nur lokal','err');
+    lastSyncState=ok;
+  }
 }
 
 /* ---------- Seed / Default Data ---------- */
@@ -669,8 +681,8 @@ const uid=p=>p+Math.random().toString(36).slice(2,8);
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function fmtSize(b){if(!b)return '—';const u=['B','KB','MB','GB'];let i=0,n=b;while(n>=1024&&i<3){n/=1024;i++;}return n.toFixed(n<10&&i>0?1:0)+' '+u[i];}
 function fmtDate(s){if(!s)return '—';const[y,m,d]=s.split('-');return `${d}.${m}.${y}`;}
-function today(){return '2026-07-15';}
-function nowStamp(){return '2026-07-15 '+new Date().toTimeString().slice(0,5);}
+function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function nowStamp(){return today()+' '+new Date().toTimeString().slice(0,5);}
 const dept=id=>DB.departments.find(d=>d.id===(id||session.dept));
 const user=()=>session.user;
 
@@ -868,6 +880,18 @@ function statusPip(key,dId){
   return['s-green','Aktuell'];
 }
 
+/* Aktuellster Inhalt einer Kachel als Ein-Zeilen-Vorschau auf der Startseite */
+function liveLine(key,dId){
+  switch(key){
+    case 'news':{const n=pubOnly(DB.news.filter(x=>x.dept===dId)).sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||b.date.localeCompare(a.date))[0];return n?'«'+n.title+'»':null;}
+    case 'events':{const e=DB.events.filter(x=>x.dept===dId&&x.date>=today()).sort((a,b)=>a.date.localeCompare(b.date))[0];return e?'Nächster: '+fmtDate(e.date)+' · '+e.title:null;}
+    case 'tasks':{const t=pubOnly(DB.tasks.filter(x=>x.dept===dId)).filter(x=>!x.done).sort((a,b)=>(a.status==='red'?0:1)-(b.status==='red'?0:1))[0];return t?t.title:null;}
+    case 'kpis':{const k=DB.kpis.filter(x=>x.dept===dId).find(x=>x.status==='red')||DB.kpis.filter(x=>x.dept===dId)[0];return k?k.label+': '+k.value+(k.unit?' '+k.unit:''):null;}
+    case 'docs':{const x=visibleDocs(dId).slice().sort((a,b)=>b.uploaded.localeCompare(a.uploaded))[0];return x?'Neu: '+x.title:null;}
+    case 'projects':{const ps=DB.projects.filter(x=>x.dept===dId);if(!ps.length)return null;const avg=Math.round(ps.reduce((s,p)=>s+p.progress,0)/ps.length);return ps.length+' laufend · Ø '+avg+'% Fortschritt';}
+    default:return null;
+  }
+}
 function tileEl(key,t,d){
   const c=counts(key,d.id);
   const[pip,pipTxt]=statusPip(key,d.id);
@@ -876,6 +900,7 @@ function tileEl(key,t,d){
   let badgeHtml='';
   if(c.n>0)badgeHtml=`<span class="badge-count">${c.n}</span>`;
   else if(c.q>0&&(key==='docs'||key==='tasks'||key==='news'||key==='events'))badgeHtml=`<span class="badge-count q" style="background:var(--blue)">${c.q}</span>`;
+  const live=liveLine(key,d.id);
   tile.innerHTML=`
     <div class="tile-top">
       <div class="ic" style="background:${t.bg}">${t.icon}</div>
@@ -883,7 +908,7 @@ function tileEl(key,t,d){
     </div>
     <div class="tile-body">
       <h3>${esc(t.name)}</h3>
-      <div class="desc">${esc(t.desc)}</div>
+      <div class="desc">${live?`<span class="live-line">${esc(live)}</span>`:esc(t.desc)}</div>
       <div class="tile-foot"><span class="pip ${pip}"></span> ${pipTxt}</div>
     </div>`;
   return tile;
@@ -1081,7 +1106,7 @@ function docToolbar(d){
   const cats=[...new Set(DB.documents.filter(x=>x.dept===d.id).map(x=>x.category))];
   const tb=el('div','toolbar');
   tb.innerHTML=`
-    <div class="search"><span class="mag">🔍</span><input id="docSearch" placeholder="Suche nach Titel, Dateiname, Kategorie, Stichwort…" value="${esc(ui.docSearch)}"></div>
+    <div class="search"><span class="mag">🔍</span><input id="docSearch" placeholder="Suche nach Titel, Dateiname, Kategorie, Stichwort…" value="${esc(ui.docSearch)}"><button class="s-clear" id="docClear" title="Suche löschen" onclick="clearDocSearch()" style="display:${ui.docSearch?'grid':'none'}">✕</button></div>
     <select class="filter-select" id="fCat"><option value="">Alle Kategorien</option>${cats.map(c=>`<option ${ui.docFilters.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
     <select class="filter-select" id="fType"><option value="">Alle Typen</option>${['pdf','docx','xlsx','pptx','png'].map(t=>`<option ${ui.docFilters.type===t?'selected':''}>${t.toUpperCase()}</option>`).join('')}</select>
     ${isAdmin()?`<select class="filter-select" id="fStatus"><option value="">Alle Status</option><option value="published" ${ui.docFilters.status==='published'?'selected':''}>Freigegeben</option><option value="draft" ${ui.docFilters.status==='draft'?'selected':''}>Entwurf</option><option value="archived" ${ui.docFilters.status==='archived'?'selected':''}>Archiviert</option></select>`:''}
@@ -1091,7 +1116,7 @@ function docToolbar(d){
     ${canEditDept(d.id)?`<button class="btn sm" onclick="openUpload()">＋ Hochladen</button>`:''}`;
   // events
   setTimeout(()=>{
-    $('#docSearch')?.addEventListener('input',e=>{ui.docSearch=e.target.value;refreshDocList(d);});
+    $('#docSearch')?.addEventListener('input',e=>{ui.docSearch=e.target.value;const cl=$('#docClear');if(cl)cl.style.display=ui.docSearch?'grid':'none';refreshDocList(d);});
     $('#fCat')?.addEventListener('change',e=>{ui.docFilters.cat=e.target.value;refreshDocList(d);});
     $('#fType')?.addEventListener('change',e=>{ui.docFilters.type=e.target.value;refreshDocList(d);});
     $('#fStatus')?.addEventListener('change',e=>{ui.docFilters.status=e.target.value;refreshDocList(d);});
@@ -1099,6 +1124,7 @@ function docToolbar(d){
   },0);
   return tb;
 }
+function clearDocSearch(){ui.docSearch='';const i=$('#docSearch');if(i){i.value='';i.focus();}const cl=$('#docClear');if(cl)cl.style.display='none';refreshDocList(dept());}
 function toggleImp(){ui.docFilters.imp=!ui.docFilters.imp;refreshDocList(dept());const b=$('#fImp');if(b)b.outerHTML;goRerenderToolbar();}
 function toggleDocView(){ui.docView=ui.docView==='table'?'grid':'table';goRerenderToolbar();}
 function goRerenderToolbar(){const body=el('div');renderDocsView(body,dept());const sb=$('.sheet-body');if(sb){sb.innerHTML='';sb.appendChild(body);}}
@@ -1120,7 +1146,12 @@ function filterDocs(d){
 function refreshDocList(d){
   const host=$('#docList');if(!host)return;
   const ds=filterDocs(d);
-  if(!ds.length){host.innerHTML=empty('📁','Keine Dokumente gefunden','Suche oder Filter anpassen');return;}
+  if(!ds.length){
+    const hasFilter=ui.docSearch||ui.docFilters.cat||ui.docFilters.type||ui.docFilters.status||ui.docFilters.imp;
+    host.innerHTML=empty('📁','Keine Dokumente gefunden',hasFilter?'Suche oder Filter anpassen':'')+
+      (canEditDept(d.id)&&!hasFilter?'<div style="text-align:center;margin-top:-30px;padding-bottom:30px"><button class="btn" onclick="openUpload()">＋ Erstes Dokument hochladen</button></div>':'');
+    return;
+  }
   if(ui.docView==='grid'){host.innerHTML='';host.appendChild(docGrid(ds));return;}
   // table
   const rows=ds.map(x=>{
@@ -1426,6 +1457,10 @@ function deactivateEmergency(){
 /* Cross-Tab/Fenster-Sync im selben Browser (Gerätesync via Backend) */
 window.addEventListener('storage',ev=>{
   if(ev.key===LS_KEY){DB=load();renderEmergency();goHomeRefresh();}
+});
+/* ESC schliesst Modal (zuerst) bzw. Overlay */
+window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){if(document.getElementById('mdl'))closeModal();else if(document.getElementById('ovl'))closeOverlay();}
 });
 
 /* =========================================================================
@@ -1991,7 +2026,7 @@ function showLogin(){buildQuickUsers();$('#loginScreen').classList.remove('hidde
 /* =========================================================================
    CLOCK
    ========================================================================= */
-function tickClock(){const c=$('#clock');if(c){const n=new Date();const days=['So','Mo','Di','Mi','Do','Fr','Sa'];c.textContent=`${days[n.getDay()]} 15.07.2026 · ${n.toTimeString().slice(0,8)}`;}}
+function tickClock(){const c=$('#clock');if(c){const n=new Date();const days=['So','Mo','Di','Mi','Do','Fr','Sa'];const dd=String(n.getDate()).padStart(2,'0'),mm=String(n.getMonth()+1).padStart(2,'0');c.textContent=`${days[n.getDay()]} ${dd}.${mm}.${n.getFullYear()} · ${n.toTimeString().slice(0,8)}`;}}
 setInterval(tickClock,1000);
 
 /* =========================================================================
@@ -2001,6 +2036,7 @@ buildQuickUsers();
 initBackend();
 if(KIOSK&&DB.departments.some(d=>d.id===KIOSK)){
   session.user=null;session.dept=KIOSK;
+  document.body.classList.add('kiosk');
   $('#loginScreen').classList.add('hidden');
   setInterval(()=>{if(SYNC_ON)remotePull(false);else{DB=load();renderEmergency();goHomeRefresh();}},30000); // Kiosk: periodisch aktualisieren
 }
